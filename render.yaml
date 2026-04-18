@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: devyntra-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd apps/backend && npm install --production
+    startCommand: cd apps/backend && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: PORT
+        value: 4000

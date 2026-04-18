@@ -1,0 +1,422 @@
+<!-- PRIORITY-BASED BENTO MONITORING LAYOUT -->
+
+<!-- ROW 1: CRITICAL RESOURCES (CPU, Memory, Storage) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 mb-6 items-stretch">
+
+    <!-- CPU: Tall Priority Card (4 cols, 2 rows) -->
+    <div
+        class="md:col-span-2 lg:col-span-4 lg:row-span-2 flex flex-col bg-white border border-slate-200 rounded-[32px] shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden ring-1 ring-slate-100 p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-slate-900 to-slate-700 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-bolt text-xs"></i></div>
+                <div>
+                    <h3 class="text-sm font-black text-slate-900 leading-none">Compute Intelligence</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1" id="mv-cpu-sub">
+                        Analyzing Processor DNA...</p>
+                </div>
+            </div>
+            <span class="text-lg font-black text-slate-900 tabular-nums" id="mv-cpu-pct">--%</span>
+        </div>
+        <div class="flex-1 flex flex-col justify-center">
+            <div class="space-y-4 mb-6">
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between text-[9px] font-black uppercase tracking-widest"><span
+                            class="text-slate-400">User Runtime</span><span class="text-slate-900"
+                            id="mv-cpu-user">--%</span></div>
+                    <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div id="mv-cpu-user-fill"
+                            class="h-full bg-emerald-400 rounded-full transition-all duration-700" style="width:0%">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between text-[9px] font-black uppercase tracking-widest"><span
+                            class="text-slate-400">Kernel Operations</span><span class="text-slate-900"
+                            id="mv-cpu-sys">--%</span></div>
+                    <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div id="mv-cpu-sys-fill" class="h-full bg-indigo-500 rounded-full transition-all duration-700"
+                            style="width:0%"></div>
+                    </div>
+                </div>
+                <div
+                    class="flex justify-between text-[9px] font-black uppercase tracking-widest text-orange-500 shrink-0">
+                    <span>I/O Wait / Steal Capacity</span><span id="mv-cpu-wait">--%</span></div>
+            </div>
+            <canvas id="mon-cpu-chart" style="width:100%;height:100px"></canvas>
+        </div>
+    </div>
+
+    <!-- MEMORY: Priority Card (4 cols) -->
+    <div
+        class="lg:col-span-4 bg-white border border-slate-200 rounded-[32px] shadow-sm hover:shadow-lg transition-all p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                    <i class="fas fa-memory text-xs"></i></div>
+                <div>
+                    <h3 class="text-sm font-black text-slate-900 leading-none">Memory Pressure</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1" id="mv-ram-sub">--
+                        Total capacity</p>
+                </div>
+            </div>
+            <span class="text-lg font-black text-slate-900 tabular-nums" id="mv-ram-pct">--%</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-2">
+            <div class="bg-indigo-50/50 p-2.5 rounded-2xl border border-indigo-100/50 text-center">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Buffers</p>
+                <p class="text-[11px] font-black text-indigo-600" id="mv-ram-buff">--</p>
+            </div>
+            <div class="bg-violet-50/50 p-2.5 rounded-2xl border border-violet-100/50 text-center">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Cached</p>
+                <p class="text-[11px] font-black text-violet-600" id="mv-ram-cache">--</p>
+            </div>
+            <div class="bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100/50 text-center">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Kernel Slab</p>
+                <p class="text-[11px] font-black text-slate-600" id="mv-ram-slab">--</p>
+            </div>
+            <div class="bg-blue-50/50 p-2.5 rounded-2xl border border-blue-100/50 text-center">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Shared</p>
+                <p class="text-[11px] font-black text-blue-600" id="mv-ram-maps">--</p>
+            </div>
+        </div>
+        <canvas id="mon-ram-chart" style="width:100%;height:60px"></canvas>
+    </div>
+
+    <!-- STORAGE: Priority Card (4 cols) -->
+    <div
+        class="lg:col-span-4 bg-white border border-slate-200 rounded-[32px] shadow-sm hover:shadow-lg transition-all p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-200">
+                    <i class="fas fa-hdd text-xs"></i></div>
+                <div>
+                    <h3 class="text-sm font-black text-slate-900 leading-none">Storage Infrastructure</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1" id="mv-disk-sub">/</p>
+                </div>
+            </div>
+            <span class="text-lg font-black text-slate-900 tabular-nums" id="mv-disk-pct">--%</span>
+        </div>
+        <div class="space-y-3 mb-4">
+            <div
+                class="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200/20 p-0.5">
+                <div id="mv-disk-fill"
+                    class="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-1000"
+                    style="width:0%"></div>
+            </div>
+            <div class="flex justify-between items-end px-1">
+                <div class="flex flex-col"><span
+                        class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Used</span><span
+                        class="text-xs font-black text-slate-900" id="mv-disk-used">--</span></div>
+                <div class="text-right flex flex-col"><span
+                        class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Inodes</span><span
+                        class="text-xs font-black text-indigo-600" id="mv-disk-inodes">--%</span></div>
+            </div>
+        </div>
+        <div class="relative bg-slate-50/30 border border-slate-100 rounded-2xl overflow-hidden mb-2"
+            style="height:80px">
+            <canvas id="mon-disk-r-chart" style="width:100%;height:80px;position:absolute;top:0;left:0"></canvas>
+            <canvas id="mon-disk-w-chart" style="width:100%;height:80px;position:absolute;top:0;left:0"></canvas>
+        </div>
+        <div class="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-400 px-1">
+            <span><i class="fas fa-arrow-down mr-1 text-purple-500"></i>Read: <span id="mv-dio-r"
+                    class="text-slate-900 font-black">--</span></span>
+            <span><i class="fas fa-arrow-up mr-1 text-rose-500"></i>Write: <span id="mv-dio-w"
+                    class="text-indigo-600 font-black">--</span></span>
+        </div>
+    </div>
+
+    <!-- NETWORK: Full Width Second Row (8 cols) -->
+    <div
+        class="md:col-span-2 lg:col-span-8 bg-white border border-slate-200 rounded-[32px] shadow-sm hover:shadow-lg transition-all p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-sky-500 to-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-200">
+                    <i class="fas fa-satellite-dish text-xs"></i></div>
+                <div>
+                    <h3 class="text-sm font-black text-slate-900 leading-none">Network Intelligence</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1" id="mv-net-iface">--
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex flex-col items-end"><span
+                        class="text-[8px] font-black text-slate-400 uppercase">Input</span><span
+                        class="text-[11px] font-black text-emerald-600" id="mv-net-rx">--</span></div>
+                <div class="flex flex-col items-end"><span
+                        class="text-[8px] font-black text-slate-400 uppercase">Output</span><span
+                        class="text-[11px] font-black text-blue-600" id="mv-net-tx">--</span></div>
+            </div>
+        </div>
+        <div class="relative bg-slate-50/30 border border-slate-100 rounded-2xl overflow-hidden mb-5"
+            style="height:100px">
+            <canvas id="mon-net-in-chart" style="width:100%;height:100px;position:absolute;top:0;left:0"></canvas>
+            <canvas id="mon-net-out-chart" style="width:100%;height:100px;position:absolute;top:0;left:0"></canvas>
+        </div>
+        <div class="grid grid-cols-4 gap-2">
+            <div class="text-center group border border-slate-100 rounded-xl p-2 bg-slate-50/20">
+                <p class="text-[8px] font-black text-slate-400 uppercase">TCP Retrans</p>
+                <p class="text-[10px] font-black text-rose-500" id="mv-tcp-retrans">--</p>
+            </div>
+            <div class="text-center group border border-slate-100 rounded-xl p-2 bg-slate-50/20">
+                <p class="text-[8px] font-black text-slate-400 uppercase">Active Est</p>
+                <p class="text-[10px] font-black text-indigo-500" id="mv-tcp-est">--</p>
+            </div>
+            <div class="text-center group border border-slate-100 rounded-xl p-2 bg-slate-50/20">
+                <p class="text-[8px] font-black text-slate-400 uppercase">Net Errors</p>
+                <p class="text-[10px] font-black text-rose-400" id="mv-net-err">0</p>
+            </div>
+            <div class="text-center group border border-slate-100 rounded-xl p-2 bg-slate-50/20">
+                <p class="text-[8px] font-black text-slate-400 uppercase">Port Status</p>
+                <p class="text-[10px] font-black text-sky-600" id="mv-net-ports">--</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ROW 2: OPERATIONAL METRICS (Security, Kernel Performance) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 mb-6 items-stretch">
+
+    <!-- SECURITY SENTINEL (6 cols) -->
+    <div
+        class="lg:col-span-6 bg-white border border-slate-200 rounded-[32px] shadow-sm hover:shadow-lg transition-all p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-rose-500 to-red-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-rose-200">
+                <i class="fas fa-shield-alt text-xs"></i></div>
+            <div>
+                <h3 class="text-sm font-black text-slate-900 leading-none">Security Sentinel</h3>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1" id="mv-kernel">Analyzing
+                    Kernel...</p>
+            </div>
+        </div>
+        <div class="flex justify-between items-center mb-4"><span id="mv-svc-status"
+                class="px-3 py-1 bg-emerald-50 text-[9px] font-black text-emerald-600 uppercase tracking-widest rounded-full border border-emerald-100">Healthy</span><span
+                class="text-[9px] font-black text-rose-500 uppercase tracking-widest" id="mv-security-failed">0 failed
+                logins</span></div>
+        <div id="mv-svc-list" class="p-3 bg-rose-50/50 rounded-2xl border border-rose-100 hidden">
+            <div class="text-[9px] font-bold text-rose-600 space-y-1" id="mv-svc-list-body"></div>
+        </div>
+        <div class="mt-2 text-[9px] font-bold text-slate-400 uppercase flex gap-4"><span>Failed Svc: <span
+                    id="mv-svc-failed" class="text-rose-500">0</span></span><span>Listen Ports: <span
+                    id="mv-security-ports" class="text-indigo-600">--</span></span></div>
+    </div>
+
+    <!-- KERNEL PERFORMANCE (6 cols) -->
+    <div
+        class="lg:col-span-6 bg-white border border-slate-200 rounded-[32px] shadow-sm hover:shadow-lg transition-all p-6">
+        <div class="flex items-center gap-3 mb-6">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-slate-800 to-slate-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                <i class="fas fa-microchip text-xs"></i></div>
+            <div>
+                <h3 class="text-sm font-black text-slate-900 leading-none">Kernel Performance Matrix</h3>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Real-time Context Ops &
+                    IRQs</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-4 gap-4">
+            <div class="border-l-2 border-indigo-200 pl-3">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1 text-xs">Ctx Switches</p>
+                <p class="text-sm font-black text-indigo-600" id="mv-perf-cs">--</p>
+            </div>
+            <div class="border-l-2 border-purple-200 pl-3">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1 text-xs">Interrupts</p>
+                <p class="text-sm font-black text-purple-600" id="mv-perf-in">--</p>
+            </div>
+            <div class="border-l-2 border-amber-200 pl-3">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1 text-xs">Queue Blk</p>
+                <p class="text-sm font-black text-amber-600" id="mv-perf-b">--</p>
+            </div>
+            <div class="border-l-2 border-rose-200 pl-3">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1 text-xs">I/O Wait</p>
+                <p class="text-sm font-black text-rose-500" id="mv-perf-fault">--</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ROW 3: SYSTEM IDENTITY (Hardware, OS, Swap) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 mb-6 items-stretch">
+
+    <!-- HARDWARE MANIFEST (5 cols) -->
+    <div
+        class="lg:col-span-5 bg-white border border-slate-200 rounded-[32px] shadow-sm hover:shadow-lg transition-all p-6 ring-1 ring-slate-100">
+        <div class="flex items-center gap-3 mb-5">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-200">
+                <i class="fas fa-cogs text-xs"></i></div>
+            <div>
+                <h3 class="text-sm font-black text-slate-900 leading-none">Hardware Manifest</h3>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Processor & Architecture
+                    DNA</p>
+            </div>
+        </div>
+        <div class="space-y-3">
+            <div class="bg-violet-50/40 border border-violet-100/50 rounded-2xl p-3">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">CPU Model</p>
+                <p class="text-[11px] font-black text-slate-900 truncate" id="mv-hw-cpumodel">Scanning...</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-slate-50/50 border border-slate-100/50 p-2.5 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Arch</p>
+                    <p class="text-[11px] font-black text-violet-600" id="mv-hw-arch">--</p>
+                </div>
+                <div class="bg-slate-50/50 border border-slate-100/50 p-2.5 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Cores</p>
+                    <p class="text-[11px] font-black text-indigo-600" id="mv-hw-cores">--</p>
+                </div>
+                <div class="bg-slate-50/50 border border-slate-100/50 p-2.5 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Temp</p>
+                    <p class="text-[11px] font-black text-amber-600" id="mv-hw-temp">--</p>
+                </div>
+            </div>
+            <div class="bg-slate-50/30 border border-slate-100/40 rounded-2xl p-3">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">GPU / Display Adapter
+                </p>
+                <p class="text-[10px] font-bold text-slate-600 truncate" id="mv-hw-gpu">Scanning...</p>
+            </div>
+            <div id="mv-hw-details" class="space-y-1"></div>
+        </div>
+    </div>
+
+    <!-- OS INTELLIGENCE (4 cols) -->
+    <div
+        class="lg:col-span-4 bg-white border border-slate-200 rounded-[32px] shadow-sm hover:shadow-lg transition-all p-6 ring-1 ring-slate-100">
+        <div class="flex items-center gap-3 mb-5">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-teal-200">
+                <i class="fab fa-linux text-xs"></i></div>
+            <div>
+                <h3 class="text-sm font-black text-slate-900 leading-none">OS Intelligence</h3>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">System Identity & Metadata
+                </p>
+            </div>
+        </div>
+        <div class="space-y-3">
+            <div class="bg-teal-50/40 border border-teal-100/50 rounded-2xl p-3">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Distribution</p>
+                <p class="text-[11px] font-black text-slate-900" id="mv-os-distro">Scanning...</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-slate-50/50 border border-slate-100/50 p-2.5 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Kernel</p>
+                    <p class="text-[10px] font-black text-emerald-600 truncate" id="mv-os-kernel">--</p>
+                </div>
+                <div class="bg-slate-50/50 border border-slate-100/50 p-2.5 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Packages</p>
+                    <p class="text-[10px] font-black text-teal-600" id="mv-os-pkgs">--</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-slate-50/50 border border-slate-100/50 p-2.5 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Last Boot</p>
+                    <p class="text-[10px] font-black text-slate-700" id="mv-os-boot">--</p>
+                </div>
+                <div class="bg-slate-50/50 border border-slate-100/50 p-2.5 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Timezone</p>
+                    <p class="text-[10px] font-black text-indigo-600 truncate" id="mv-os-tz">--</p>
+                </div>
+            </div>
+            <div class="bg-slate-50/50 border border-slate-100/50 p-2.5 rounded-2xl text-center">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Hostname</p>
+                <p class="text-[10px] font-black text-slate-900" id="mv-os-host">--</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SWAP ANALYSIS (3 cols) -->
+    <div
+        class="lg:col-span-3 bg-white border border-slate-200 rounded-[32px] shadow-sm hover:shadow-lg transition-all p-6 ring-1 ring-slate-100">
+        <div class="flex items-center gap-3 mb-5">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-pink-200">
+                <i class="fas fa-exchange-alt text-xs"></i></div>
+            <div>
+                <h3 class="text-sm font-black text-slate-900 leading-none">Swap Analysis</h3>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Virtual Memory Overflow
+                </p>
+            </div>
+        </div>
+        <div class="space-y-2.5">
+            <div class="flex justify-between items-center bg-pink-50/40 border border-pink-100/40 p-3 rounded-2xl">
+                <div>
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Swap Total</p>
+                    <p class="text-sm font-black text-slate-900" id="mv-swap-total">--</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Used</p>
+                    <p class="text-sm font-black text-rose-500" id="mv-swap-used">--</p>
+                </div>
+            </div>
+            <div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                <div id="mv-swap-fill"
+                    class="h-full bg-gradient-to-r from-pink-400 to-rose-500 rounded-full transition-all duration-1000"
+                    style="width:0%"></div>
+            </div>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center" id="mv-swap-pct">0%
+                utilized</p>
+            <div id="mv-swap-devices" class="space-y-1.5 mt-2"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ROW 4: RESOURCE LIMITS (Full Width) -->
+<div class="bg-white border border-slate-200 rounded-[32px] shadow-sm p-8 mb-6 ring-1 ring-slate-100">
+    <div class="flex items-center gap-4 mb-6">
+        <div
+            class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-cyan-200">
+            <i class="fas fa-tachometer-alt text-sm"></i></div>
+        <div>
+            <h3 class="text-base font-black text-slate-900 leading-none">Resource Limits & Capacity</h3>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">System-wide kernel limits
+                and process boundaries</p>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-center">
+            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2"><i
+                    class="fas fa-file-alt mr-1 opacity-50"></i>Open Files Limit</p>
+            <p class="text-lg font-black text-slate-900" id="mv-lim-openfiles">--</p>
+            <div class="mt-2 h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div id="mv-lim-openfiles-fill" class="h-full bg-cyan-500 rounded-full transition-all duration-700"
+                    style="width:0%"></div>
+            </div>
+            <p class="text-[8px] font-bold text-slate-400 mt-1" id="mv-lim-openfiles-pct">--</p>
+        </div>
+        <div class="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-center">
+            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2"><i
+                    class="fas fa-users mr-1 opacity-50"></i>Max Processes</p>
+            <p class="text-lg font-black text-slate-900" id="mv-lim-maxprocs">--</p>
+            <p class="text-[8px] font-bold text-slate-400 mt-1">ulimit -u</p>
+        </div>
+        <div class="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-center">
+            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2"><i
+                    class="fas fa-layer-group mr-1 opacity-50"></i>File Max (sys)</p>
+            <p class="text-lg font-black text-indigo-600" id="mv-lim-filemax">--</p>
+            <p class="text-[8px] font-bold text-slate-400 mt-1">fs.file-max</p>
+        </div>
+        <div class="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-center">
+            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2"><i
+                    class="fas fa-fingerprint mr-1 opacity-50"></i>PID Max</p>
+            <p class="text-lg font-black text-violet-600" id="mv-lim-pidmax">--</p>
+            <p class="text-[8px] font-bold text-slate-400 mt-1">kernel.pid_max</p>
+        </div>
+        <div class="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-center">
+            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2"><i
+                    class="fas fa-stream mr-1 opacity-50"></i>Threads Max</p>
+            <p class="text-lg font-black text-emerald-600" id="mv-lim-threadsmax">--</p>
+            <p class="text-[8px] font-bold text-slate-400 mt-1">kernel.threads-max</p>
+        </div>
+        <div class="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-center">
+            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2"><i
+                    class="fas fa-map mr-1 opacity-50"></i>Max Map Count</p>
+            <p class="text-lg font-black text-amber-600" id="mv-lim-mapcount">--</p>
+            <p class="text-[8px] font-bold text-slate-400 mt-1">vm.max_map_count</p>
+        </div>
+    </div>
+</div>

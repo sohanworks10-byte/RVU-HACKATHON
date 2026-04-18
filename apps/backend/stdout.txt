@@ -1,0 +1,210 @@
+TAP version 13
+# Subtest: Phase-3 Preview + Blue/Green (integration)
+    # Subtest: PR open -> preview created (idempotent) and reused on synchronize
+    not ok 1 - PR open -> preview created (idempotent) and reused on synchronize
+      ---
+      duration_ms: 305697.1215
+      type: 'test'
+      location: 'C:\\Users\\sohan\\Downloads\\Devyntra software - global\\apps\\backend\\tests\\integration\\phase3_preview_bluegreen.test.js:52:3'
+      failureType: 'testCodeFailure'
+      error: 'fetch failed'
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      stack: |-
+        node:internal/deps/undici/undici:13510:13
+        async TestContext.<anonymous> (file:///C:/Users/sohan/Downloads/Devyntra%20software%20-%20global/apps/backend/tests/integration/phase3_preview_bluegreen.test.js:80:18)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1442:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+    # Subtest: PR close -> destroy_queued -> worker -> destroyed
+    not ok 2 - PR close -> destroy_queued -> worker -> destroyed
+      ---
+      duration_ms: 17.3397
+      type: 'test'
+      location: 'C:\\Users\\sohan\\Downloads\\Devyntra software - global\\apps\\backend\\tests\\integration\\phase3_preview_bluegreen.test.js:124:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        The expression evaluated to a falsy value:
+        
+          assert.ok(ws)
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sohan/Downloads/Devyntra%20software%20-%20global/apps/backend/tests/integration/phase3_preview_bluegreen.test.js:127:12)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: concurrent webhook delivery IDs are idempotent
+    not ok 3 - concurrent webhook delivery IDs are idempotent
+      ---
+      duration_ms: 305888.4011
+      type: 'test'
+      location: 'C:\\Users\\sohan\\Downloads\\Devyntra software - global\\apps\\backend\\tests\\integration\\phase3_preview_bluegreen.test.js:158:3'
+      failureType: 'testCodeFailure'
+      error: 'fetch failed'
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      stack: |-
+        node:internal/deps/undici/undici:13510:13
+        async TestContext.<anonymous> (file:///C:/Users/sohan/Downloads/Devyntra%20software%20-%20global/apps/backend/tests/integration/phase3_preview_bluegreen.test.js:174:16)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: blue/green switch -> soaking -> soak_success (fake scripts)
+    not ok 4 - blue/green switch -> soaking -> soak_success (fake scripts)
+      ---
+      duration_ms: 4.8201
+      type: 'test'
+      location: 'C:\\Users\\sohan\\Downloads\\Devyntra software - global\\apps\\backend\\tests\\integration\\phase3_preview_bluegreen.test.js:180:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        null value in column "name" violates not-null constraint
+        
+        🐜 This seems to be an execution error, which means that your request syntax seems okay,
+            but the resulting statement cannot be executed → Probably not a pg-mem error.
+        
+        *️⃣ Failed SQL statement: insert into terraform_workspaces (project_id, workspace_name, workspace_mode, status, state)
+               values (null,'bg-test-3','blue-green','switch_approved','{"switch_script":"ok","health_check_script":"ok","rollback_script":"ok","soak_ms":1,"health_interval_ms":1,"fail_threshold":3}')
+               returning *;
+        
+        👉 You can file an issue at https://github.com/oguimbal/pg-mem along with a way to reproduce this error (if you can), and  the stacktrace:
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ColRef.checkConstraints (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:7108:19)
+        MemoryTable.doInsert (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:6409:15)
+        Insert.performMutation (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:9737:44)
+        Insert._doExecuteOnce (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:4553:29)
+        Insert.enumerate (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:4561:29)
+        enumerate.next (<anonymous>)
+        SelectExec.execute (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:3202:41)
+        C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:5902:42
+        pushExecutionCtx (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:481:16)
+        C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:5891:67
+      ...
+    # Subtest: blue/green failure -> rollback -> rolled_back (missing rollback_script still marks rolled_back)
+    not ok 5 - blue/green failure -> rollback -> rolled_back (missing rollback_script still marks rolled_back)
+      ---
+      duration_ms: 5.3822
+      type: 'test'
+      location: 'C:\\Users\\sohan\\Downloads\\Devyntra software - global\\apps\\backend\\tests\\integration\\phase3_preview_bluegreen.test.js:209:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        null value in column "name" violates not-null constraint
+        
+        🐜 This seems to be an execution error, which means that your request syntax seems okay,
+            but the resulting statement cannot be executed → Probably not a pg-mem error.
+        
+        *️⃣ Failed SQL statement: insert into terraform_workspaces (project_id, workspace_name, workspace_mode, status, state)
+               values (null,'bg-test-4','blue-green','switch_approved','{"switch_script":"ok","health_check_script":"fail","soak_ms":600000,"health_interval_ms":1,"fail_threshold":3,"consecutive_failures":2}')
+               returning *;
+        
+        👉 You can file an issue at https://github.com/oguimbal/pg-mem along with a way to reproduce this error (if you can), and  the stacktrace:
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ColRef.checkConstraints (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:7108:19)
+        MemoryTable.doInsert (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:6409:15)
+        Insert.performMutation (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:9737:44)
+        Insert._doExecuteOnce (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:4553:29)
+        Insert.enumerate (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:4561:29)
+        enumerate.next (<anonymous>)
+        SelectExec.execute (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:3202:41)
+        C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:5902:42
+        pushExecutionCtx (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:481:16)
+        C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:5891:67
+      ...
+    # Subtest: missing health_check_script -> treated as healthy -> soak_success
+    not ok 6 - missing health_check_script -> treated as healthy -> soak_success
+      ---
+      duration_ms: 3.1891
+      type: 'test'
+      location: 'C:\\Users\\sohan\\Downloads\\Devyntra software - global\\apps\\backend\\tests\\integration\\phase3_preview_bluegreen.test.js:238:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        null value in column "name" violates not-null constraint
+        
+        🐜 This seems to be an execution error, which means that your request syntax seems okay,
+            but the resulting statement cannot be executed → Probably not a pg-mem error.
+        
+        *️⃣ Failed SQL statement: insert into terraform_workspaces (project_id, workspace_name, workspace_mode, status, state)
+               values (null,'bg-test-5','blue-green','soaking','{"soak_ms":1,"health_interval_ms":1,"fail_threshold":3,"soak_started_at":"2026-02-16T14:27:41.479Z"}')
+               returning *;
+        
+        👉 You can file an issue at https://github.com/oguimbal/pg-mem along with a way to reproduce this error (if you can), and  the stacktrace:
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ColRef.checkConstraints (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:7108:19)
+        MemoryTable.doInsert (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:6409:15)
+        Insert.performMutation (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:9737:44)
+        Insert._doExecuteOnce (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:4553:29)
+        Insert.enumerate (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:4561:29)
+        enumerate.next (<anonymous>)
+        SelectExec.execute (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:3202:41)
+        C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:5902:42
+        pushExecutionCtx (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:481:16)
+        C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:5891:67
+      ...
+    # Subtest: unsafe workspace name destroy attempt -> destroy_failed
+    not ok 7 - unsafe workspace name destroy attempt -> destroy_failed
+      ---
+      duration_ms: 3.4139
+      type: 'test'
+      location: 'C:\\Users\\sohan\\Downloads\\Devyntra software - global\\apps\\backend\\tests\\integration\\phase3_preview_bluegreen.test.js:253:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        null value in column "name" violates not-null constraint
+        
+        🐜 This seems to be an execution error, which means that your request syntax seems okay,
+            but the resulting statement cannot be executed → Probably not a pg-mem error.
+        
+        *️⃣ Failed SQL statement: insert into terraform_workspaces (project_id, workspace_name, workspace_mode, status, state)
+               values (null,'prod-main','ephemeral','destroy_queued','{}')
+               returning *;
+        
+        👉 You can file an issue at https://github.com/oguimbal/pg-mem along with a way to reproduce this error (if you can), and  the stacktrace:
+        
+        
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        ColRef.checkConstraints (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:7108:19)
+        MemoryTable.doInsert (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:6409:15)
+        Insert.performMutation (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:9737:44)
+        Insert._doExecuteOnce (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:4553:29)
+        Insert.enumerate (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:4561:29)
+        enumerate.next (<anonymous>)
+        SelectExec.execute (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:3202:41)
+        C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:5902:42
+        pushExecutionCtx (C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:481:16)
+        C:\Users\sohan\Downloads\Devyntra software - global\node_modules\pg-mem\index.js:5891:67
+      ...
+    1..7
+not ok 1 - Phase-3 Preview + Blue/Green (integration)
+  ---
+  duration_ms: 612159.7433
+  type: 'suite'
+  location: 'C:\\Users\\sohan\\Downloads\\Devyntra software - global\\apps\\backend\\tests\\integration\\phase3_preview_bluegreen.test.js:15:1'
+  failureType: 'subtestsFailed'
+  error: '7 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Error: Test hook "before" at tests\\integration\\phase3_preview_bluegreen.test.js:20:3 generated asynchronous activity after the test ended. This activity created the error "Error: null value in column "name" violates not-null constraint\\n\\n🐜 This seems to be an execution error, which means that your request syntax seems okay,\\n    but the resulting statement cannot be executed → Probably not a pg-mem error.\\n\\n*️⃣ Failed SQL statement: insert into terraform_workspaces (\\n      project_id, pipeline_id, run_id,\\n      workspace_name, workspace_mode,\\n      git_provider, repo, branch, pr_number,\\n      created_by_uuid, expires_at,\\n      state, status\\n    ) values ('00000000-0000-0000-0000-000000000123','0d7efb00-eb0d-ebfc-b962-d812e903727d','5f43b47b-ebc7-d8ef-d6b9-2e7679d27905','preview-pr-1-088ff4aa','ephemeral','github','org/repo','feat/x','1',null,'2026-02-17T14:17:30.970Z','{"head_sha":"aaa"}','creating')\\n    returning *;\\n\\n👉 You can file an issue at https://github.com/oguimbal/pg-mem along with a way to reproduce this error (if you can), and  the stacktrace:\\n\\n" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+# Error: Test hook "before" at tests\\integration\\phase3_preview_bluegreen.test.js:20:3 generated asynchronous activity after the test ended. This activity created the error "Error: ERROR: insert into "pipeline_runs" (pipeline_id, status, signature, trigger, created_by, id, created_at) values ($1, $2, $3, $4, $5, $6, $7) returning "id" - duplicate key value violates unique constraint "pipeline_runs_pkey"\\nDETAIL: Key (id)=(5f43b47b-ebc7-d8ef-d6b9-2e7679d27905) already exists.\\n\\n🐜 This seems to be an execution error, which means that your request syntax seems okay,\\n    but the resulting statement cannot be executed → Probably not a pg-mem error.\\n\\n*️⃣ Failed SQL statement: insert into pipeline_runs (pipeline_id, status, signature, trigger, created_by)\\n     values ('0d7efb00-eb0d-ebfc-b962-d812e903727d', 'queued', 'd9488d7c2b928483c2580ef1e95f2fdc8eba5a963f0e82191dae9367183f2a69', 'preview', null)\\n     returning *;\\n\\n👉 You can file an issue at https://github.com/oguimbal/pg-mem along with a way to reproduce this error (if you can), and  the stacktrace:\\n\\n" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+1..1
+# tests 7
+# suites 1
+# pass 0
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 613095.3586

@@ -1,0 +1,1912 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="web-shim.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaOps - Enterprise Monitoring</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: #F3F4F6;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow: visible;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            overflow: visible;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .gauge-circle {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .gauge-progress {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .stat-bar {
+            transition: width 0.5s ease;
+        }
+
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .chart-container {
+            min-height: 200px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 3px;
+        }
+
+        /* Skeleton Loading Animation */
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: 4px;
+        }
+
+        .skeleton-text {
+            height: 16px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+
+        .skeleton-text-sm {
+            height: 12px;
+            margin-bottom: 6px;
+            border-radius: 3px;
+        }
+
+        .skeleton-circle {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+        }
+
+        .skeleton-chart {
+            height: 160px;
+            border-radius: 8px;
+        }
+
+        .skeleton-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .skeleton-info-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .loading .card {
+            pointer-events: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Header styling */
+        .monitoring-header {
+            background: transparent;
+            border-bottom: none;
+            padding: 12px 24px 8px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .monitoring-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+            letter-spacing: -0.025em;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .refresh-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .refresh-label {
+            color: #6B7280;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .refresh-select {
+            background: white;
+            color: #374151;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #D1D5DB;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .refresh-select:hover {
+            border-color: #9CA3AF;
+            background: #F9FAFB;
+        }
+
+        .refresh-select:focus {
+            border-color: #6366F1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.connected {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-badge.disconnected {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #10B981;
+        }
+
+        .status-dot.disconnected {
+            background: #F59E0B;
+        }
+
+        /* Quick Info Bar */
+        .quick-info-bar {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            padding: 0 24px 16px 24px;
+        }
+
+        .info-card {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-icon {
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .info-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111827;
+            line-height: 1.2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="monitoring-header">
+            <h1 class="monitoring-title">Monitoring Dashboard</h1>
+            <div class="refresh-control">
+                <div class="status-badge disconnected" id="status-badge">
+                    <div class="status-dot disconnected" id="status-dot"></div>
+                    <span id="status-text">Connecting...</span>
+                </div>
+                <label class="refresh-label" for="polling-interval">Refresh Rate:</label>
+                <select id="polling-interval" class="refresh-select" onchange="changePollingInterval(this.value)">
+                    <option value="1000">1 second</option>
+                    <option value="3000">3 seconds</option>
+                    <option value="5000" selected>5 seconds</option>
+                    <option value="10000">10 seconds</option>
+                    <option value="15000">15 seconds</option>
+                    <option value="30000">30 seconds</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Content Wrapper with Scroll -->
+        <div class="content-wrapper">
+
+            <!-- Skeleton Loading State -->
+            <div id="skeleton-loader" class="loading">
+                <!-- Skeleton Quick Info Cards -->
+                <div class="quick-info-bar">
+                    <div class="skeleton-info-card">
+                        <div class="skeleton skeleton-text-sm" style="width: 60%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 80%; margin-top: 8px;"></div>
+                    </div>
+                    <div class="skeleton-info-card">
+                        <div class="skeleton skeleton-text-sm" style="width: 60%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 80%; margin-top: 8px;"></div>
+                    </div>
+                    <div class="skeleton-info-card">
+                        <div class="skeleton skeleton-text-sm" style="width: 60%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 80%; margin-top: 8px;"></div>
+                    </div>
+                    <div class="skeleton-info-card">
+                        <div class="skeleton skeleton-text-sm" style="width: 60%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 80%; margin-top: 8px;"></div>
+                    </div>
+                    <div class="skeleton-info-card">
+                        <div class="skeleton skeleton-text-sm" style="width: 60%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 80%; margin-top: 8px;"></div>
+                    </div>
+                    <div class="skeleton-info-card">
+                        <div class="skeleton skeleton-text-sm" style="width: 60%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 80%; margin-top: 8px;"></div>
+                    </div>
+                </div>
+
+                <!-- Skeleton Main Grid -->
+                <div class="w-full grid grid-cols-12 gap-4" style="padding: 16px 24px; margin: 0; max-width: 100%;">
+                    <!-- Skeleton Metric Cards -->
+                    <div class="col-span-12 md:col-span-6 lg:col-span-3 skeleton-card">
+                        <div class="skeleton skeleton-text" style="width: 40%; margin-bottom: 12px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 60%; height: 32px; margin-bottom: 16px;">
+                        </div>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <div class="skeleton skeleton-circle"></div>
+                            <div style="flex: 1;">
+                                <div class="skeleton skeleton-text-sm" style="width: 100%; margin-bottom: 8px;"></div>
+                                <div class="skeleton skeleton-text-sm" style="width: 100%; margin-bottom: 8px;"></div>
+                                <div class="skeleton skeleton-text-sm" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-span-12 md:col-span-6 lg:col-span-3 skeleton-card">
+                        <div class="skeleton skeleton-text" style="width: 40%; margin-bottom: 12px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 60%; height: 32px; margin-bottom: 16px;">
+                        </div>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <div class="skeleton skeleton-circle"></div>
+                            <div style="flex: 1;">
+                                <div class="skeleton skeleton-text-sm" style="width: 100%; margin-bottom: 8px;"></div>
+                                <div class="skeleton skeleton-text-sm" style="width: 100%; margin-bottom: 8px;"></div>
+                                <div class="skeleton skeleton-text-sm" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-span-12 md:col-span-6 lg:col-span-3 skeleton-card">
+                        <div class="skeleton skeleton-text" style="width: 40%; margin-bottom: 12px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 60%; height: 32px; margin-bottom: 16px;">
+                        </div>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <div class="skeleton skeleton-circle"></div>
+                            <div style="flex: 1;">
+                                <div class="skeleton skeleton-text-sm" style="width: 100%; margin-bottom: 8px;"></div>
+                                <div class="skeleton skeleton-text-sm" style="width: 100%; margin-bottom: 8px;"></div>
+                                <div class="skeleton skeleton-text-sm" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-span-12 md:col-span-6 lg:col-span-3 skeleton-card">
+                        <div class="skeleton skeleton-text" style="width: 40%; margin-bottom: 12px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 60%; height: 32px; margin-bottom: 16px;">
+                        </div>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <div class="skeleton skeleton-circle"></div>
+                            <div style="flex: 1;">
+                                <div class="skeleton skeleton-text-sm" style="width: 100%; margin-bottom: 8px;"></div>
+                                <div class="skeleton skeleton-text-sm" style="width: 100%; margin-bottom: 8px;"></div>
+                                <div class="skeleton skeleton-text-sm" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skeleton Charts -->
+                    <div class="col-span-12 lg:col-span-6 skeleton-card">
+                        <div class="skeleton skeleton-text" style="width: 30%; margin-bottom: 16px;"></div>
+                        <div class="skeleton skeleton-chart"></div>
+                    </div>
+                    <div class="col-span-12 lg:col-span-6 skeleton-card">
+                        <div class="skeleton skeleton-text" style="width: 30%; margin-bottom: 16px;"></div>
+                        <div class="skeleton skeleton-chart"></div>
+                    </div>
+
+                    <!-- Skeleton Tables -->
+                    <div class="col-span-12 lg:col-span-8 skeleton-card">
+                        <div class="skeleton skeleton-text" style="width: 40%; margin-bottom: 16px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 100%; height: 40px; margin-bottom: 8px;">
+                        </div>
+                        <div class="skeleton skeleton-text" style="width: 100%; height: 40px; margin-bottom: 8px;">
+                        </div>
+                        <div class="skeleton skeleton-text" style="width: 100%; height: 40px;"></div>
+                    </div>
+                    <div class="col-span-12 lg:col-span-4 skeleton-card">
+                        <div class="skeleton skeleton-text" style="width: 40%; margin-bottom: 16px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 100%; height: 60px; margin-bottom: 12px;">
+                        </div>
+                        <div class="skeleton skeleton-text" style="width: 100%; height: 60px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actual Content (hidden initially) -->
+            <div id="actual-content" class="hidden">
+
+                <!-- Quick Info Cards -->
+                <div class="quick-info-bar">
+                    <div class="info-card cursor-pointer hover:border-indigo-500 transition-all"
+                        onclick="window.parent.navigate('connections_detail')">
+                        <div class="info-header">
+                            <div class="info-icon" style="color: #6B7280;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                                </svg>
+                            </div>
+                            <div class="info-label">Hostname</div>
+                        </div>
+                        <div class="info-value" id="info-hostname">--</div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-header">
+                            <div class="info-icon" style="color: #10B981;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <div class="info-label">Uptime</div>
+                        </div>
+                        <div class="info-value" id="info-uptime">--</div>
+                    </div>
+
+                    <div class="info-card cursor-pointer hover:border-indigo-500 transition-all"
+                        onclick="window.parent.navigate('cpu_detail')">
+                        <div class="info-header">
+                            <div class="info-icon" style="color: #8B5CF6;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                                </svg>
+                            </div>
+                            <div class="info-label">Load</div>
+                        </div>
+                        <div class="info-value" id="info-load">--</div>
+                    </div>
+
+                    <div class="info-card cursor-pointer hover:border-indigo-500 transition-all"
+                        onclick="window.parent.navigate('connections_detail')">
+                        <div class="info-header">
+                            <div class="info-icon" style="color: #3B82F6;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div class="info-label">Connections</div>
+                        </div>
+                        <div class="info-value" id="info-connections">--</div>
+                    </div>
+
+                    <div class="info-card cursor-pointer hover:border-indigo-500 transition-all"
+                        onclick="window.parent.navigate('entropy_detail')">
+                        <div class="info-header">
+                            <div class="info-icon" style="color: #EC4899;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M12 1v6m0 6v6"></path>
+                                </svg>
+                            </div>
+                            <div class="info-label">Entropy</div>
+                        </div>
+                        <div class="info-value" id="info-entropy">--</div>
+                    </div>
+
+                    <div class="info-card cursor-pointer hover:border-indigo-500 transition-all"
+                        onclick="window.parent.navigate('files_detail')">
+                        <div class="info-header">
+                            <div class="info-icon" style="color: #F59E0B;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                    <polyline points="13 2 13 9 20 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="info-label">Files</div>
+                        </div>
+                        <div class="info-value" id="info-files">--</div>
+                    </div>
+                </div>
+
+                <!-- Main Grid -->
+                <div class="w-full grid grid-cols-12 gap-4" style="padding: 16px 24px; margin: 0; max-width: 100%;">
+
+                    <!-- Row 1: Key Metrics Cards -->
+                    <!-- CPU Card -->
+                    <div class="col-span-12 md:col-span-6 lg:col-span-3 card p-4 cursor-pointer hover:border-indigo-500 transition-all"
+                        onclick="window.parent.navigate('cpu_detail')">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">CPU Usage
+                                </p>
+                                <p class="text-xl font-bold text-gray-900 mt-0.5" id="cpu-value">--%</p>
+                            </div>
+                            <span
+                                class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-medium rounded-lg">Normal</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="relative w-16 h-16">
+                                <svg class="w-16 h-16 gauge-circle">
+                                    <circle cx="32" cy="32" r="26" stroke="#E5E7EB" stroke-width="5" fill="none" />
+                                    <circle id="cpu-gauge" cx="32" cy="32" r="26" stroke="#3B82F6" stroke-width="5"
+                                        fill="none" stroke-dasharray="163" stroke-dashoffset="163"
+                                        stroke-linecap="round" class="gauge-progress" />
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <i class="fas fa-microchip text-gray-400 text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 space-y-1">
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">Load 1m</span>
+                                    <span class="font-medium text-gray-700" id="load-1">--</span>
+                                </div>
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">Load 5m</span>
+                                    <span class="font-medium text-gray-700" id="load-5">--</span>
+                                </div>
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">Load 15m</span>
+                                    <span class="font-medium text-gray-700" id="load-15">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Memory Card -->
+                    <div class="col-span-12 md:col-span-6 lg:col-span-3 card p-4 cursor-pointer hover:border-indigo-500 transition-all font-inter"
+                        onclick="window.parent.navigate('memory_detail')">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Memory</p>
+                                <p class="text-xl font-bold text-gray-900 mt-0.5" id="mem-value">--%</p>
+                            </div>
+                            <span
+                                class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-medium rounded-lg">Optimal</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="relative w-16 h-16">
+                                <svg class="w-16 h-16 gauge-circle">
+                                    <circle cx="32" cy="32" r="26" stroke="#E5E7EB" stroke-width="5" fill="none" />
+                                    <circle id="mem-gauge" cx="32" cy="32" r="26" stroke="#10B981" stroke-width="5"
+                                        fill="none" stroke-dasharray="163" stroke-dashoffset="163"
+                                        stroke-linecap="round" class="gauge-progress" />
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                        </path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex-1 space-y-1">
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">Used</span>
+                                    <span class="font-medium text-gray-700" id="mem-used">-- GB</span>
+                                </div>
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">Free</span>
+                                    <span class="font-medium text-gray-700" id="mem-free">-- GB</span>
+                                </div>
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">PSI</span>
+                                    <span class="font-medium text-blue-600" id="mem-psi">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Disk Card -->
+                    <div class="col-span-12 md:col-span-6 lg:col-span-3 card p-4 cursor-pointer hover:border-indigo-500 transition-all"
+                        onclick="window.parent.navigate('disk_detail')">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Disk Usage
+                                </p>
+                                <p class="text-xl font-bold text-gray-900 mt-0.5" id="disk-value">--%</p>
+                            </div>
+                            <span class="px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-medium rounded-lg"
+                                id="disk-status">Good</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="relative w-16 h-16">
+                                <svg class="w-16 h-16 gauge-circle">
+                                    <circle cx="32" cy="32" r="26" stroke="#E5E7EB" stroke-width="5" fill="none" />
+                                    <circle id="disk-gauge" cx="32" cy="32" r="26" stroke="#F59E0B" stroke-width="5"
+                                        fill="none" stroke-dasharray="163" stroke-dashoffset="163"
+                                        stroke-linecap="round" class="gauge-progress" />
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                                        </path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex-1 space-y-1">
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">IO Latency</span>
+                                    <span class="font-medium text-gray-700" id="disk-latency">-- ms</span>
+                                </div>
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">Inodes</span>
+                                    <span class="font-medium text-gray-700" id="disk-inodes">--%</span>
+                                </div>
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">Read/Write</span>
+                                    <span class="font-medium text-gray-700" id="disk-io">--/--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Network Card -->
+                    <div class="col-span-12 md:col-span-6 lg:col-span-3 card p-4 cursor-pointer hover:border-indigo-500 transition-all"
+                        onclick="window.parent.navigate('network_detail')">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Network</p>
+                                <p class="text-xl font-bold text-gray-900 mt-0.5" id="net-value">-- MB/s</p>
+                            </div>
+                            <span
+                                class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-medium rounded-lg">Active</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="relative w-16 h-16">
+                                <svg class="w-16 h-16 gauge-circle">
+                                    <circle cx="32" cy="32" r="26" stroke="#E5E7EB" stroke-width="5" fill="none" />
+                                    <circle id="net-gauge" cx="32" cy="32" r="26" stroke="#60A5FA" stroke-width="5"
+                                        fill="none" stroke-dasharray="163" stroke-dashoffset="163"
+                                        stroke-linecap="round" class="gauge-progress" />
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex-1 space-y-1">
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">RX</span>
+                                    <span class="font-medium text-emerald-600" id="net-rx">-- MB/s</span>
+                                </div>
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">TX</span>
+                                    <span class="font-medium text-blue-600" id="net-tx">-- MB/s</span>
+                                </div>
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-500">Errors</span>
+                                    <span class="font-medium text-gray-700" id="net-errors">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CPU History Chart -->
+                    <div class="col-span-12 lg:col-span-6 card p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xs font-semibold text-gray-700">CPU History</h3>
+                            <div class="flex gap-2 items-center">
+                                <span class="w-2 h-2 bg-blue-500 rounded-sm"></span>
+                                <span class="text-[10px] text-gray-500">Usage %</span>
+                            </div>
+                        </div>
+                        <div id="cpu-chart" class="chart-container" style="min-height: 160px;"></div>
+                    </div>
+
+                    <!-- Memory History Chart -->
+                    <div class="col-span-12 lg:col-span-6 card p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xs font-semibold text-gray-700">Memory History</h3>
+                            <div class="flex gap-2 items-center">
+                                <span class="w-2 h-2 bg-emerald-500 rounded-sm"></span>
+                                <span class="text-[10px] text-gray-500">Usage %</span>
+                            </div>
+                        </div>
+                        <div id="mem-chart" class="chart-container" style="min-height: 160px;"></div>
+                    </div>
+
+                    <!-- Docker Containers -->
+                    <div class="col-span-12 lg:col-span-8 card p-4 cursor-pointer hover:border-indigo-500 transition-all font-inter"
+                        onclick="window.parent.navigate('container_detail')">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xs font-semibold text-gray-700">Container Runtime</h3>
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-medium rounded-full"
+                                id="container-count">0 Running</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-100">
+                                        <th class="text-left py-2 text-[10px] font-medium text-gray-400 uppercase">
+                                            Container
+                                        </th>
+                                        <th class="text-left py-2 text-[10px] font-medium text-gray-400 uppercase">
+                                            Status
+                                        </th>
+                                        <th class="text-left py-2 text-[10px] font-medium text-gray-400 uppercase">CPU
+                                        </th>
+                                        <th class="text-left py-2 text-[10px] font-medium text-gray-400 uppercase">
+                                            Memory
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="docker-list" class="text-[11px]">
+                                    <tr>
+                                        <td colspan="4" class="py-6 text-center text-gray-400 text-xs">No containers
+                                            running</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Alerts Panel -->
+                    <div class="col-span-12 lg:col-span-4 card p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xs font-semibold text-gray-700">Active Alerts</h3>
+                            <span class="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-medium rounded-full"
+                                id="alert-count">0</span>
+                        </div>
+                        <div id="alerts-list" class="space-y-2 max-h-[220px] overflow-y-auto">
+                            <div class="text-center py-6 text-gray-400 text-xs">No active alerts</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Additional Metrics -->
+                    <!-- Top Processes -->
+                    <div class="col-span-12 md:col-span-6 lg:col-span-4 card p-5 cursor-pointer hover:border-indigo-500 transition-all"
+                        onclick="window.parent.navigate('processes_detail')">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-4">Top CPU Consumers</h3>
+                        <div id="top-processes" class="space-y-3">
+                            <div class="flex items-center justify-between py-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold text-gray-300">01</span>
+                                    <span class="text-sm text-gray-700">--</span>
+                                </div>
+                                <span class="text-xs font-medium text-gray-500">--%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Failed Services -->
+                    <div class="col-span-12 md:col-span-6 lg:col-span-4 card p-4">
+                        <h3 class="text-xs font-semibold text-gray-700 mb-3">System Services</h3>
+                        <div id="services-status" class="space-y-2">
+                            <div class="flex items-center justify-between p-2 bg-emerald-50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                                    <span class="text-[11px] font-medium text-gray-700">All services operational</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Open Files & Pressure -->
+                        <div class="col-span-12 lg:col-span-4 card p-4">
+                            <h3 class="text-xs font-semibold text-gray-700 mb-3">System Pressure</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-[10px] mb-1.5">
+                                        <span class="text-gray-500">Open Files</span>
+                                        <span class="font-medium text-gray-700" id="open-files">-- / --</span>
+                                    </div>
+                                    <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div id="open-files-bar" class="h-full bg-blue-500 rounded-full stat-bar"
+                                            style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] mb-1.5">
+                                        <span class="text-gray-500">PSI Memory (some)</span>
+                                        <span class="font-medium text-gray-700" id="psi-some">--</span>
+                                    </div>
+                                    <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div id="psi-bar" class="h-full bg-purple-500 rounded-full stat-bar"
+                                            style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] mb-1.5">
+                                        <span class="text-gray-500">TCP Connections</span>
+                                        <span class="font-medium text-gray-700" id="tcp-conns">--</span>
+                                    </div>
+                                    <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div id="tcp-bar" class="h-full bg-emerald-500 rounded-full stat-bar"
+                                            style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- Close grid -->
+                </div> <!-- Close actual-content -->
+            </div> <!-- Close content-wrapper -->
+        </div> <!-- Close main-container -->
+
+        <script>
+            // Configuration
+            const THRESHOLDS = { cpu: 85, memory: 85, disk: 90 };
+            const POLLING_INTERVAL_KEY = 'AlphaOps-monitoring-refresh-interval';
+            let backendUrl = '';
+            let currentServerId = '';
+            let authToken = '';
+            let updateInterval = null;
+            let pollingIntervalMs = 5000; // Default 5 seconds
+            let chartInstances = {};
+            let activeAlerts = [];
+
+            let lastNetSample = null;
+            let lastNetSampleAt = null;
+
+            // Historical data for charts (last 30 data points)
+            let cpuHistory = Array(30).fill(0);
+            let memoryHistory = Array(30).fill(0);
+
+            // Load saved polling interval from localStorage
+            function loadPollingInterval() {
+                try {
+                    const saved = localStorage.getItem(POLLING_INTERVAL_KEY);
+                    if (saved) {
+                        const interval = parseInt(saved);
+                        if (!isNaN(interval) && interval > 0) {
+                            pollingIntervalMs = interval;
+                            console.log('[monitoring] Loaded polling interval from localStorage:', pollingIntervalMs);
+                            // Update the dropdown to match
+                            const select = document.getElementById('polling-interval');
+                            if (select) {
+                                select.value = pollingIntervalMs.toString();
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('[monitoring] Failed to load polling interval:', error);
+                }
+            }
+
+            // Save polling interval to localStorage
+            function savePollingInterval(intervalMs) {
+                try {
+                    localStorage.setItem(POLLING_INTERVAL_KEY, intervalMs.toString());
+                    console.log('[monitoring] Saved polling interval to localStorage:', intervalMs);
+                } catch (error) {
+                    console.error('[monitoring] Failed to save polling interval:', error);
+                }
+            }
+
+            // Broadcast polling interval change to other components
+            function broadcastPollingIntervalChange(intervalMs) {
+                console.log('[monitoring] ✓ Interval saved to localStorage - other components will detect change within 1 second');
+            }
+
+            // Change polling interval
+            function changePollingInterval(intervalMs) {
+                pollingIntervalMs = parseInt(intervalMs);
+                console.log('[monitoring] ========================================');
+                console.log('[monitoring] Polling interval changed to:', pollingIntervalMs, 'ms');
+
+                // Save to localStorage
+                savePollingInterval(pollingIntervalMs);
+
+                // Broadcast to other components (they poll localStorage every 1 second)
+                broadcastPollingIntervalChange(pollingIntervalMs);
+
+                // NOTIFY PARENT IMMEDIATELY
+                window.parent.postMessage({
+                    type: 'monitoring-interval-changed',
+                    intervalMs: pollingIntervalMs
+                }, '*');
+
+                // Restart polling with new interval
+                if (updateInterval) {
+                    clearInterval(updateInterval);
+                    updateInterval = setInterval(refreshStats, pollingIntervalMs);
+                    console.log('[monitoring] ✓ Restarted polling with new interval');
+                }
+                console.log('[monitoring] ========================================');
+            }
+
+            // Format hostname - remove ip- prefix and show just the IP
+            function formatHostname(hostname) {
+                if (!hostname || hostname === '--') return '--';
+                // Remove 'ip-' prefix and replace hyphens with dots
+                if (hostname.startsWith('ip-')) {
+                    return hostname.substring(3).replace(/-/g, '.');
+                }
+                return hostname;
+            }
+
+            // Format uptime in a human-readable way
+            function formatUptime(uptimeSeconds) {
+                if (!uptimeSeconds || uptimeSeconds === 0) return '--';
+
+                const seconds = Math.floor(uptimeSeconds);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+                const days = Math.floor(hours / 24);
+                const weeks = Math.floor(days / 7);
+
+                if (weeks > 0) {
+                    const remainingDays = days % 7;
+                    const remainingHours = hours % 24;
+                    if (remainingDays > 0) {
+                        return `${weeks}w ${remainingDays}d ${remainingHours}h`;
+                    }
+                    return `${weeks}w ${remainingHours}h`;
+                } else if (days > 0) {
+                    const remainingHours = hours % 24;
+                    const remainingMinutes = minutes % 60;
+                    return `${days}d ${remainingHours}h ${remainingMinutes}m`;
+                } else if (hours > 0) {
+                    const remainingMinutes = minutes % 60;
+                    const remainingSeconds = seconds % 60;
+                    return `${hours}h ${remainingMinutes}m ${remainingSeconds}s`;
+                } else if (minutes > 0) {
+                    const remainingSeconds = seconds % 60;
+                    return `${minutes}m ${remainingSeconds}s`;
+                } else {
+                    return `${seconds}s`;
+                }
+            }
+
+            // Initialize configuration from Electron
+            async function initializeConfig() {
+                try {
+                    // Get backend URL
+                    if (window.electronAPI && window.electronAPI.getBackendUrl) {
+                        const backendResult = await window.electronAPI.getBackendUrl();
+                        if (backendResult && backendResult.url) {
+                            backendUrl = backendResult.url;
+                            console.log('[monitoring] Backend URL:', backendUrl);
+                        }
+                    }
+
+                    // Get auth token
+                    if (window.electronAPI && window.electronAPI.getToken) {
+                        const token = await window.electronAPI.getToken();
+                        if (token) {
+                            authToken = token;
+                            console.log('[monitoring] Auth token received');
+                        }
+                    }
+
+                    // Listen for server connection events
+                    if (window.electronAPI && window.electronAPI.onServerConnected) {
+                        window.electronAPI.onServerConnected((serverId) => {
+                            console.log('[monitoring] Server connected:', serverId);
+                            currentServerId = serverId;
+                            startPolling();
+                        });
+                    }
+
+                    console.log('[monitoring] Configuration initialized');
+
+                    // Periodically check for interval changes from localStorage (to sync background/foreground iframes)
+                    setInterval(() => {
+                        try {
+                            const saved = localStorage.getItem(POLLING_INTERVAL_KEY);
+                            if (saved) {
+                                const interval = parseInt(saved);
+                                if (!isNaN(interval) && interval > 0 && interval !== pollingIntervalMs) {
+                                    console.log('[monitoring] ✓ Detected interval change from localStorage:', interval);
+                                    pollingIntervalMs = interval;
+
+                                    // Update select if it exists
+                                    const select = document.getElementById('polling-interval');
+                                    if (select) select.value = interval.toString();
+
+                                    // Restart polling
+                                    if (updateInterval) {
+                                        clearInterval(updateInterval);
+                                        updateInterval = setInterval(refreshStats, pollingIntervalMs);
+                                        console.log('[monitoring] ✓ Restarted polling with new interval:', interval);
+                                    }
+                                }
+                            }
+                        } catch (e) { }
+                    }, 1000);
+
+                } catch (error) {
+                    console.error('[monitoring] Failed to initialize config:', error);
+                }
+            }
+
+            // Generate mock data for standalone testing
+            const generateMockMetrics = () => ({
+                cpu: Math.floor(Math.random() * 30) + 20,
+                memory: Math.floor(Math.random() * 20) + 40,
+                disk: Math.floor(Math.random() * 15) + 10,
+                load1: (Math.random() * 1.5).toFixed(2),
+                load5: (Math.random() * 1.8 + 0.3).toFixed(2),
+                load15: (Math.random() * 2 + 0.8).toFixed(2),
+                memUsed: "3.2",
+                memFree: "4.8",
+                psiSome: (Math.random() * 0.3).toFixed(3),
+                diskLatency: Math.floor(Math.random() * 15) + 3,
+                diskRead: (Math.random() * 50).toFixed(1),
+                diskWrite: (Math.random() * 30).toFixed(1),
+                inodes: Math.floor(Math.random() * 12) + 3,
+                networkRx: Math.floor(Math.random() * 800) + 200,
+                networkTx: Math.floor(Math.random() * 400) + 100,
+                netErrors: Math.floor(Math.random() * 2),
+                openFiles: Math.floor(Math.random() * 30000) + 15000,
+                openFilesMax: 65536,
+                tcpConns: Math.floor(Math.random() * 150) + 30,
+                hostname: 'ip-172-31-19-149',
+                uptimeFormatted: '2d 5h 30m',
+                uptimeSeconds: 192600,
+                entropy: Math.floor(Math.random() * 2000) + 1500,
+                dockerContainers: [],
+                topProcesses: [],
+            });
+
+            // Initialize
+            async function init() {
+                // Show skeleton while loading
+                showSkeleton();
+
+                // Load saved polling interval
+                loadPollingInterval();
+
+                // Initialize configuration first
+                await initializeConfig();
+
+                // Listen for command responses from parent
+                window.addEventListener('message', (event) => {
+                    const msg = event?.data;
+
+                    // Handle configuration from parent window
+                    if (msg && msg.type === 'AlphaOps-monitoring-config') {
+                        console.log('[monitoring] Received config from parent');
+                        if (msg.backendUrl) {
+                            backendUrl = msg.backendUrl;
+                        }
+                        if (msg.token) {
+                            authToken = msg.token;
+                        }
+                        if (msg.serverId) {
+                            currentServerId = msg.serverId;
+                            // Start polling when we have all config
+                            if (backendUrl && authToken && currentServerId) {
+                                startPolling();
+                            }
+                        }
+                        return;
+                    }
+
+                    // Handle ssh-exec responses
+                    if (msg && msg.type === 'ssh-exec-response') {
+                        const resolve = pendingCommands.get(msg.id);
+                        if (resolve) {
+                            pendingCommands.delete(msg.id);
+                            resolve(msg.result);
+                        }
+                    }
+
+                    // Handle server connected events
+                    if (msg && msg.type === 'server-connected') {
+                        console.log('[monitoring] Server connected event received');
+                        if (msg.serverId) {
+                            currentServerId = msg.serverId;
+                        }
+                        startPolling();
+                    }
+                });
+
+                initCharts();
+
+                // Request config from parent window
+                console.log('[monitoring] Requesting config from parent...');
+                window.parent.postMessage({ type: 'monitoring-request-config' }, '*');
+
+                // Retry requesting config if not received within 2 seconds
+                const configRetryInterval = setInterval(() => {
+                    if (backendUrl && authToken && currentServerId) {
+                        clearInterval(configRetryInterval);
+                        return;
+                    }
+                    console.log('[monitoring] Still waiting for config, retrying request...');
+                    window.parent.postMessage({ type: 'monitoring-request-config' }, '*');
+                }, 2000);
+
+                // Only start polling if we have a server ID
+                if (currentServerId) {
+                    startPolling();
+                } else {
+                    console.log('[monitoring] Waiting for server connection...');
+                }
+            }
+
+            // Charts
+            function initCharts() {
+                const commonOptions = {
+                    chart: {
+                        type: 'area',
+                        height: 160,
+                        toolbar: { show: false },
+                        animations: { enabled: true, dynamicAnimation: { speed: 800 } }
+                    },
+                    stroke: { curve: 'smooth', width: 3 },
+                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.1 } },
+                    dataLabels: { enabled: false },
+                    grid: {
+                        borderColor: '#E5E7EB',
+                        strokeDashArray: 4,
+                        xaxis: { lines: { show: false } },
+                        yaxis: { lines: { show: true } }
+                    },
+                    xaxis: {
+                        labels: { show: true, style: { fontSize: '10px', colors: '#9CA3AF' } },
+                        axisBorder: { show: false },
+                        axisTicks: { show: false },
+                        categories: Array(30).fill('').map((_, i) => `${i}`)
+                    },
+                    yaxis: {
+                        labels: {
+                            style: { fontSize: '10px', colors: '#9CA3AF' },
+                            formatter: (val) => val.toFixed(0) + '%'
+                        },
+                        min: 0,
+                        max: 100
+                    },
+                    tooltip: {
+                        enabled: true,
+                        y: {
+                            formatter: (val) => val.toFixed(1) + '%'
+                        }
+                    }
+                };
+
+                chartInstances.cpu = new ApexCharts(document.querySelector("#cpu-chart"), {
+                    ...commonOptions,
+                    series: [{ name: 'CPU Usage', data: cpuHistory }],
+                    colors: ['#3B82F6'],
+                    title: {
+                        text: 'CPU Usage Over Time',
+                        align: 'left',
+                        style: { fontSize: '12px', fontWeight: 600, color: '#6B7280' }
+                    }
+                });
+
+                chartInstances.mem = new ApexCharts(document.querySelector("#mem-chart"), {
+                    ...commonOptions,
+                    series: [{ name: 'Memory Usage', data: memoryHistory }],
+                    colors: ['#10B981'],
+                    title: {
+                        text: 'Memory Usage Over Time',
+                        align: 'left',
+                        style: { fontSize: '12px', fontWeight: 600, color: '#6B7280' }
+                    }
+                });
+
+                chartInstances.cpu.render();
+                chartInstances.mem.render();
+            }
+
+            // Update gauge
+            function updateGauge(id, value, max = 100) {
+                const circle = document.getElementById(id);
+                if (!circle) return;
+                const circumference = 2 * Math.PI * 26; // Reduced radius for compact mode
+                const offset = circumference - (value / max) * circumference;
+                circle.style.strokeDasharray = circumference;
+                circle.style.strokeDashoffset = offset;
+            }
+
+            // Start polling
+            function startPolling() {
+                if (updateInterval) clearInterval(updateInterval);
+                updateInterval = setInterval(refreshStats, pollingIntervalMs);
+                refreshStats();
+            }
+
+            // Show actual content and hide skeleton
+            function showContent() {
+                document.getElementById('skeleton-loader').classList.add('hidden');
+                document.getElementById('actual-content').classList.remove('hidden');
+            }
+
+            // Show skeleton and hide actual content
+            function showSkeleton() {
+                document.getElementById('skeleton-loader').classList.remove('hidden');
+                document.getElementById('actual-content').classList.add('hidden');
+            }
+
+            // Refresh stats
+            async function refreshStats() {
+                const data = await fetchSSHStats();
+                if (!data) {
+                    console.log('[monitoring] No data received, skipping UI update');
+                    return;
+                }
+
+                // Hide skeleton and show content after first successful fetch
+                showContent();
+
+                // Broadcast stats to parent window for dashboard and top bar
+                window.parent.postMessage({
+                    type: 'monitoring-stats-update',
+                    stats: {
+                        cpu: data.cpu,
+                        memory: data.memory,
+                        disk: data.disk,
+                        load1: data.load1,
+                        load5: data.load5,
+                        load15: data.load15,
+                        memUsed: data.memUsed,
+                        memFree: data.memFree,
+                        networkRx: data.networkRx,
+                        networkTx: data.networkTx,
+                        diskLatency: data.diskLatency,
+                        hostname: data.hostname,
+                        uptime: data.uptimeFormatted,
+                        tcpConns: data.tcpConns,
+                        openFiles: data.openFiles,
+                        topProcesses: data.topProcesses,
+                        dockerContainers: data.dockerContainers
+                    }
+                }, '*');
+
+                // Update quick info cards with formatted data
+                document.getElementById('info-hostname').textContent = formatHostname(data.hostname);
+                document.getElementById('info-uptime').textContent = data.uptimeFormatted || '--';
+                document.getElementById('info-load').textContent = data.load1 || '--';
+                document.getElementById('info-connections').textContent = data.tcpConns || '--';
+                document.getElementById('info-entropy').textContent = data.entropy ? data.entropy.toLocaleString() : '--';
+                document.getElementById('info-files').textContent = data.openFiles ? data.openFiles.toLocaleString() : '--';
+
+                // Update historical data for charts
+                cpuHistory.shift(); // Remove oldest
+                cpuHistory.push(data.cpu); // Add newest
+
+                memoryHistory.shift(); // Remove oldest
+                memoryHistory.push(data.memory); // Add newest
+
+                // Update values
+                document.getElementById('cpu-value').textContent = (data.cpu || 0) + '%';
+                document.getElementById('mem-value').textContent = (data.memory || 0) + '%';
+                document.getElementById('disk-value').textContent = (data.disk || 0) + '%';
+                document.getElementById('net-value').textContent = ((data.networkRx + data.networkTx) / 1024).toFixed(1) + ' MB/s';
+
+                document.getElementById('load-1').textContent = data.load1;
+                document.getElementById('load-5').textContent = data.load5;
+                document.getElementById('load-15').textContent = data.load15;
+
+                document.getElementById('mem-used').textContent = data.memUsed + ' GB';
+                document.getElementById('mem-free').textContent = data.memFree + ' GB';
+                document.getElementById('mem-psi').textContent = data.psiSome;
+
+                document.getElementById('disk-latency').textContent = (data.diskLatency && !isNaN(data.diskLatency)) ? data.diskLatency.toFixed(1) + ' ms' : '-- ms';
+                document.getElementById('disk-inodes').textContent = (data.inodes || 0) + '%';
+                document.getElementById('disk-io').textContent = data.diskRead + '/' + data.diskWrite + ' MB/s';
+
+                document.getElementById('net-rx').textContent = (data.networkRx / 1024).toFixed(1) + ' MB/s';
+                document.getElementById('net-tx').textContent = (data.networkTx / 1024).toFixed(1) + ' MB/s';
+                document.getElementById('net-errors').textContent = data.netErrors;
+
+                document.getElementById('open-files').textContent = (data.openFiles || 0).toLocaleString() + ' / ' + (data.openFilesMax || 0).toLocaleString();
+                document.getElementById('open-files-bar').style.width = Math.min(100, ((data.openFiles / data.openFilesMax) * 100) || 0) + '%';
+                document.getElementById('psi-some').textContent = data.psiSome;
+                document.getElementById('psi-bar').style.width = Math.min(100, (parseFloat(data.psiSome) * 200) || 0) + '%';
+                document.getElementById('tcp-conns').textContent = data.tcpConns || 0;
+                document.getElementById('tcp-bar').style.width = Math.min(100, (data.tcpConns / 2) || 0) + '%';
+
+                // Update gauges
+                updateGauge('cpu-gauge', data.cpu || 0);
+                updateGauge('mem-gauge', data.memory || 0);
+                updateGauge('disk-gauge', data.disk || 0);
+                updateGauge('net-gauge', Math.min(100, ((data.networkRx + data.networkTx) / 10) || 0));
+
+                // Update charts with real historical data
+                if (chartInstances.cpu && typeof chartInstances.cpu.updateSeries === 'function') {
+                    console.log('[monitoring] Updating CPU chart with:', cpuHistory);
+                    chartInstances.cpu.updateSeries([{ name: 'CPU Usage', data: cpuHistory }], true);
+                } else {
+                    console.warn('[monitoring] CPU chart instance not ready for update');
+                }
+                
+                if (chartInstances.mem && typeof chartInstances.mem.updateSeries === 'function') {
+                    console.log('[monitoring] Updating Memory chart with:', memoryHistory);
+                    chartInstances.mem.updateSeries([{ name: 'Memory Usage', data: memoryHistory }], true);
+                } else {
+                    console.warn('[monitoring] Memory chart instance not ready for update');
+                }
+
+                // Update Docker mock
+                updateDockerUI(data.dockerContainers || []);
+                updateTopProcesses(data.topProcesses || []);
+                checkAlerts(data);
+            }
+
+            // SSH Command Bridge via postMessage (since iframe cannot access ipcRenderer directly)
+            let pendingCommands = new Map();
+            let commandId = 0;
+
+            async function executeSSHCommand(command) {
+                console.log('[monitoring] Sending SSH command:', command);
+                return new Promise((resolve) => {
+                    const id = ++commandId;
+                    pendingCommands.set(id, resolve);
+
+                    // Send command request to parent
+                    window.parent.postMessage({
+                        type: 'ssh-exec-request',
+                        id: id,
+                        command: command
+                    }, '*');
+                    console.log('[monitoring] Posted message to parent, id:', id);
+
+                    // Timeout after 10 seconds
+                    setTimeout(() => {
+                        if (pendingCommands.has(id)) {
+                            console.log('[monitoring] Command timeout, id:', id);
+                            pendingCommands.delete(id);
+                            resolve(null);
+                        }
+                    }, 10000);
+                });
+            }
+
+            // Listen for command responses from parent
+            window.addEventListener('message', (event) => {
+                const msg = event?.data;
+                console.log('[monitoring] Received message:', msg?.type, msg);
+                if (!msg || msg.type !== 'ssh-exec-response') return;
+
+                const resolve = pendingCommands.get(msg.id);
+                if (resolve) {
+                    pendingCommands.delete(msg.id);
+                    resolve(msg.result);
+                }
+            });
+
+            // CPU tracking for delta calculation
+            let lastCpuSample = null;
+            let lastCpuSampleTime = null;
+
+            // Check if SSH is connected
+            async function checkSSHConnection() {
+                const result = await executeSSHCommand('echo connected');
+                return result && result.includes('connected');
+            }
+
+            async function fetchSSHStats() {
+                const isConnected = await checkSSHConnection();
+
+                // Update status indicator
+                const statusDot = document.getElementById('status-dot');
+                const statusText = document.getElementById('status-text');
+                const statusBadge = document.getElementById('status-badge');
+
+                if (statusDot && statusText && statusBadge) {
+                    if (isConnected) {
+                        statusDot.className = 'status-dot connected';
+                        statusText.textContent = 'Live Data';
+                        statusBadge.className = 'status-badge connected';
+                    } else {
+                        statusDot.className = 'status-dot disconnected';
+                        statusText.textContent = 'Mock Data';
+                        statusBadge.className = 'status-badge disconnected';
+                    }
+                }
+
+                console.log('[monitoring] SSH Status:', isConnected ? 'CONNECTED' : 'DISCONNECTED');
+
+                if (!isConnected) {
+                    console.log('[monitoring] Using mock data');
+                    return {
+                        ...generateMockMetrics(),
+                        dockerContainers: [],
+                        topProcesses: [],
+                    };
+                }
+
+                console.log('[monitoring] Fetching real data via SSH...');
+
+                // Fetch all stats in parallel
+                const [
+                    cpuinfo,
+                    meminfo,
+                    diskinfo,
+                    loadavg,
+                    uptime,
+                    netdev,
+                    tcpconns,
+                    fileNr,
+                    psiMem,
+                    dockerPs,
+                    dockerStats,
+                    topCpu,
+                    iostat,
+                    hostname,
+                    entropy
+                ] = await Promise.all([
+                    executeSSHCommand("cat /proc/stat | head -1"),
+                    executeSSHCommand("free -m"),
+                    executeSSHCommand("df -h / | tail -1"),
+                    executeSSHCommand("cat /proc/loadavg"),
+                    executeSSHCommand("uptime"),
+                    executeSSHCommand("cat /proc/net/dev"),
+                    executeSSHCommand("cat /proc/net/tcp /proc/net/tcp6 2>/dev/null | wc -l"),
+                    executeSSHCommand("cat /proc/sys/fs/file-nr"),
+                    executeSSHCommand("cat /proc/pressure/memory 2>/dev/null || echo 'some avg10=0.00'"),
+                    executeSSHCommand("docker ps --format '{{.Names}} {{.Status}}' 2>/dev/null || echo ''"),
+                    executeSSHCommand("docker stats --no-stream --format '{{.Name}} {{.CPUPerc}} {{.MemUsage}}' 2>/dev/null || echo ''"),
+                    executeSSHCommand("ps aux --sort=-%cpu | head -6"),
+                    executeSSHCommand("iostat -xk 1 2 2>/dev/null | tail -20 || echo ''"),
+                    executeSSHCommand("hostname"),
+                    executeSSHCommand("cat /proc/sys/kernel/random/entropy_avail 2>/dev/null || echo '0'")
+                ]);
+
+                // Parse CPU from /proc/stat using delta calculation
+                let cpu = 0;
+                if (cpuinfo) {
+                    const parts = cpuinfo.split(/\s+/).slice(1, 9).map(Number);
+                    if (parts.length >= 4) {
+                        const now = Date.now();
+                        const idle = parts[3];
+                        const iowait = parts[4] || 0;
+                        const total = parts.reduce((a, b) => a + b, 0);
+
+                        if (lastCpuSample && lastCpuSampleTime) {
+                            // Calculate delta
+                            const totalDelta = total - lastCpuSample.total;
+                            const idleDelta = (idle + iowait) - (lastCpuSample.idle + lastCpuSample.iowait);
+
+                            if (totalDelta > 0) {
+                                cpu = Math.round(((totalDelta - idleDelta) / totalDelta) * 100);
+                                cpu = Math.max(0, Math.min(100, cpu)); // Clamp between 0-100
+                            }
+                        }
+
+                        // Store current sample for next calculation
+                        lastCpuSample = { total, idle, iowait };
+                        lastCpuSampleTime = now;
+
+                        // If this is the first sample, use a simple calculation as fallback
+                        if (cpu === 0 && total > 0) {
+                            cpu = Math.round(((total - idle - iowait) / total) * 100);
+                            cpu = Math.max(0, Math.min(100, cpu));
+                        }
+                    }
+                }
+
+                // Parse memory
+                let memory = 0, memUsed = '--', memFree = '--';
+                if (meminfo) {
+                    const lines = meminfo.split('\n');
+                    const memLine = lines.find(l => l.includes('Mem:'));
+                    if (memLine) {
+                        const parts = memLine.trim().split(/\s+/);
+                        const total = parseInt(parts[1]) || 1;
+                        const used = parseInt(parts[2]) || 0;
+                        const free = parseInt(parts[3]) || 0;
+                        memory = Math.round((used / total) * 100);
+                        memUsed = (used / 1024).toFixed(1);
+                        memFree = (free / 1024).toFixed(1);
+                        console.log('[monitoring] Memory:', { memUsed, memFree, memory: memory + '%', raw: memLine });
+                    }
+                }
+
+                // Parse disk
+                let disk = 0;
+                if (diskinfo) {
+                    const parts = diskinfo.trim().split(/\s+/);
+                    const percentStr = parts[parts.length - 2] || '0%';
+                    disk = parseInt(percentStr.replace('%', '')) || 0;
+                }
+
+                // Parse load
+                let load1 = '--', load5 = '--', load15 = '--';
+                if (loadavg) {
+                    const parts = loadavg.trim().split(/\s+/);
+                    load1 = parts[0] || '--';
+                    load5 = parts[1] || '--';
+                    load15 = parts[2] || '--';
+                    console.log('[monitoring] Load averages:', { load1, load5, load15, raw: loadavg });
+                }
+
+                // Parse PSI
+                let psiSome = 0;
+                if (psiMem) {
+                    const m = psiMem.match(/some\s+avg10=([\d.]+)/);
+                    if (m) psiSome = parseFloat(m[1]) || 0;
+                    console.log('[monitoring] PSI:', { psiSome: psiSome.toFixed(3), raw: psiMem });
+                }
+
+                // Parse file descriptors and inodes
+                let openFiles = 0, openFilesMax = 65536;
+                if (fileNr) {
+                    const p = fileNr.trim().split(/\s+/);
+                    if (p.length >= 3) {
+                        openFiles = parseInt(p[0]) || 0;
+                        openFilesMax = parseInt(p[2]) || openFilesMax;
+                    }
+                }
+
+                // Get inode usage from df
+                let inodes = 0;
+                const dfInodes = await executeSSHCommand("df -i / | tail -1");
+                if (dfInodes) {
+                    const parts = dfInodes.trim().split(/\s+/);
+                    const percentStr = parts[parts.length - 2] || '0%';
+                    inodes = parseInt(percentStr.replace('%', '')) || 0;
+                }
+
+                // Parse TCP connections (subtract 1 for header line if present)
+                let tcpConns = parseInt(tcpconns) || 0;
+                if (tcpConns > 0) tcpConns = Math.max(0, tcpConns - 1); // Remove header line count
+
+                // Parse network
+                const net = parseProcNetDev(netdev || '');
+                const netRate = computeNetRates(net);
+
+                console.log('[monitoring] Network:', {
+                    rxMBps: (netRate.rxBps / 1024).toFixed(1),
+                    txMBps: (netRate.txBps / 1024).toFixed(1),
+                    errors: net.errors,
+                    rxBytes: net.rxBytes,
+                    txBytes: net.txBytes
+                });
+
+                // Parse Docker
+                const dockerContainers = parseDockerPs(dockerPs || '', dockerStats || '');
+
+                // Parse top processes
+                const topProcesses = parseTopCpu(topCpu || '');
+
+                // Parse iostat for disk latency and IO rates
+                let diskLatency = 0;
+                let diskRead = 0;
+                let diskWrite = 0;
+                if (iostat) {
+                    const lines = iostat.split('\n');
+                    let headerIndex = -1;
+                    let deviceIndex = -1;
+
+                    // Find header line to get column positions (look for the LAST occurrence for 2nd iteration)
+                    const headerLines = [];
+                    for (let i = 0; i < lines.length; i++) {
+                        if (lines[i].trim().includes('Device') && (lines[i].includes('r/s') || lines[i].includes('rkB/s'))) {
+                            headerLines.push(i);
+                        }
+                    }
+
+                    // Use the last header (second iteration if available)
+                    headerIndex = headerLines.length > 0 ? headerLines[headerLines.length - 1] : -1;
+
+                    if (headerIndex >= 0) {
+                        const headerLine = lines[headerIndex].trim();
+                        const headers = headerLine.split(/\s+/);
+
+                        // Find column indices
+                        const rkBsIdx = headers.indexOf('rkB/s');
+                        const wkBsIdx = headers.indexOf('wkB/s');
+                        const awaitIdx = headers.indexOf('await');
+
+                        console.log('[monitoring] iostat headers:', { headers, rkBsIdx, wkBsIdx, awaitIdx });
+
+                        // Find device line after this header
+                        for (let j = headerIndex + 1; j < lines.length; j++) {
+                            const devLine = lines[j].trim();
+                            if (!devLine) continue;
+                            if (devLine.includes('sda') || devLine.includes('vda') || devLine.includes('nvme') || devLine.includes('xvda')) {
+                                const parts = devLine.split(/\s+/);
+                                console.log('[monitoring] iostat device line:', { parts, line: devLine });
+
+                                if (rkBsIdx > 0 && rkBsIdx < parts.length) {
+                                    const val = parseFloat(parts[rkBsIdx]);
+                                    diskRead = !isNaN(val) ? (val / 1024).toFixed(1) : '0.0';
+                                }
+                                if (wkBsIdx > 0 && wkBsIdx < parts.length) {
+                                    const val = parseFloat(parts[wkBsIdx]);
+                                    diskWrite = !isNaN(val) ? (val / 1024).toFixed(1) : '0.0';
+                                }
+                                if (awaitIdx > 0 && awaitIdx < parts.length) {
+                                    diskLatency = parseFloat(parts[awaitIdx]) || 0;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Ensure diskRead and diskWrite are strings
+                if (typeof diskRead === 'number') diskRead = diskRead.toFixed(1);
+                if (typeof diskWrite === 'number') diskWrite = diskWrite.toFixed(1);
+                if (!diskRead) diskRead = '0.0';
+                if (!diskWrite) diskWrite = '0.0';
+
+                console.log('[monitoring] Disk IO:', { diskRead, diskWrite, diskLatency, iostatAvailable: !!iostat });
+
+                // Parse hostname
+                const hostnameValue = (hostname || '').trim() || 'unknown';
+
+                // Parse uptime - try multiple methods
+                let uptimeSeconds = 0;
+                let uptimeFormatted = '--';
+
+                // Method 1: Try /proc/uptime first (most reliable)
+                const procUptime = await executeSSHCommand("cat /proc/uptime | awk '{print $1}'");
+                if (procUptime && procUptime.trim()) {
+                    const seconds = parseFloat(procUptime.trim());
+                    if (!isNaN(seconds) && seconds > 0) {
+                        uptimeSeconds = Math.floor(seconds);
+                        uptimeFormatted = formatUptime(uptimeSeconds);
+                    }
+                }
+
+                // Method 2: Fallback to parsing 'uptime' command if /proc/uptime failed
+                if (uptimeSeconds === 0 && uptime) {
+                    const match = uptime.match(/up\s+(.+?),\s+\d+\s+user/);
+                    if (match) {
+                        const uptimeStr = match[1].trim();
+                        let totalSeconds = 0;
+
+                        const weeksMatch = uptimeStr.match(/(\d+)\s+week/);
+                        const daysMatch = uptimeStr.match(/(\d+)\s+day/);
+                        const hoursMatch = uptimeStr.match(/(\d+):(\d+)/); // Format like "1:55"
+                        const hourMatch = uptimeStr.match(/(\d+)\s+hour/);
+                        const minutesMatch = uptimeStr.match(/(\d+)\s+min/);
+
+                        if (weeksMatch) totalSeconds += parseInt(weeksMatch[1]) * 7 * 24 * 60 * 60;
+                        if (daysMatch) totalSeconds += parseInt(daysMatch[1]) * 24 * 60 * 60;
+                        if (hoursMatch) {
+                            totalSeconds += parseInt(hoursMatch[1]) * 60 * 60;
+                            totalSeconds += parseInt(hoursMatch[2]) * 60;
+                        } else if (hourMatch) {
+                            totalSeconds += parseInt(hourMatch[1]) * 60 * 60;
+                        }
+                        if (minutesMatch) totalSeconds += parseInt(minutesMatch[1]) * 60;
+
+                        if (totalSeconds > 0) {
+                            uptimeSeconds = totalSeconds;
+                            uptimeFormatted = formatUptime(uptimeSeconds);
+                        }
+                    }
+                }
+
+                // Parse entropy
+                const entropyRaw = (entropy || '').trim();
+                const entropyValue = parseInt(entropyRaw) || 0;
+
+                return {
+                    cpu,
+                    memory,
+                    disk,
+                    load1,
+                    load5,
+                    load15,
+                    memUsed,
+                    memFree,
+                    psiSome: psiSome.toFixed(3),
+                    diskLatency,
+                    diskRead,
+                    diskWrite,
+                    inodes,
+                    networkRx: netRate.rxBps,
+                    networkTx: netRate.txBps,
+                    netErrors: net.errors,
+                    openFiles,
+                    openFilesMax,
+                    tcpConns,
+                    dockerContainers,
+                    topProcesses,
+                    hostname: hostnameValue,
+                    uptimeFormatted,
+                    uptimeSeconds,
+                    entropy: entropyValue,
+                };
+            }
+
+            function parseProcNetDev(text) {
+                const t = String(text || '');
+                const lines = t.split('\n').map(l => l.trim()).filter(Boolean);
+                let rxBytes = 0;
+                let txBytes = 0;
+                let errors = 0;
+                for (const line of lines) {
+                    if (!line.includes(':')) continue;
+                    const [ifacePart, rest] = line.split(':');
+                    const parts = rest.trim().split(/\s+/);
+                    // rx: bytes packets errs drop ... tx: bytes packets errs drop ...
+                    const rxb = parseInt(parts[0]) || 0;
+                    const rxerr = parseInt(parts[2]) || 0;
+                    const txb = parseInt(parts[8]) || 0;
+                    const txerr = parseInt(parts[10]) || 0;
+                    rxBytes += rxb;
+                    txBytes += txb;
+                    errors += rxerr + txerr;
+                }
+                return { rxBytes, txBytes, errors };
+            }
+
+            function computeNetRates(sample) {
+                const now = Date.now();
+                if (!lastNetSample || !lastNetSampleAt) {
+                    lastNetSample = sample;
+                    lastNetSampleAt = now;
+                    // Return small values on first sample instead of 0
+                    return { rxBps: sample.rxBytes > 0 ? 100 : 0, txBps: sample.txBytes > 0 ? 50 : 0 };
+                }
+                const dt = Math.max(1, (now - lastNetSampleAt) / 1000);
+                const rxBps = (sample.rxBytes - lastNetSample.rxBytes) / dt;
+                const txBps = (sample.txBytes - lastNetSample.txBytes) / dt;
+                lastNetSample = sample;
+                lastNetSampleAt = now;
+                return {
+                    rxBps: Math.max(0, rxBps),
+                    txBps: Math.max(0, txBps),
+                };
+            }
+
+            function parseDockerPs(ps, stats) {
+                const psText = String(ps || '').trim();
+                if (!psText || psText.includes('Cannot connect') || psText.includes('command not found')) return [];
+                const lines = psText.split('\n').map(l => l.trim()).filter(Boolean);
+                if (lines.length === 0) return [];
+
+                const statsMap = {};
+                const statsText = String(stats || '').trim();
+                if (statsText && !statsText.includes('Cannot connect')) {
+                    const sLines = statsText.split('\n').filter(l => l.trim());
+                    for (const l of sLines) {
+                        const p = l.trim().split(/\s+/);
+                        if (p.length >= 3) {
+                            const name = p[0];
+                            const cpu = p[1];
+                            const mem = p[2] + (p[3] ? ' / ' + p[3] : '');
+                            statsMap[name] = { cpu, mem };
+                        }
+                    }
+                }
+
+                return lines.map((l) => {
+                    const parts = l.split(' ');
+                    const name = parts[0];
+                    const status = parts.slice(1).join(' ');
+                    const s = statsMap[name] || { cpu: '--', mem: '--' };
+                    return { name, status, cpu: s.cpu, mem: s.mem };
+                });
+            }
+
+            function parseTopCpu(text) {
+                const t = String(text || '').trim();
+                if (!t) return [];
+                const lines = t.split('\n').slice(1).filter(l => l.trim()); // Skip header, filter empty
+                return lines
+                    .slice(0, 5) // Take top 5
+                    .map(l => {
+                        const p = l.trim().split(/\s+/);
+                        if (p.length < 3) return null;
+                        const cpu = p[2] || '--';
+                        const name = p[p.length - 1].split('/').pop();
+                        return { name, cpu };
+                    })
+                    .filter(Boolean); // Remove nulls
+            }
+
+            function updateDockerUI(containers) {
+                const list = Array.isArray(containers) ? containers : [];
+                document.getElementById('container-count').textContent = list.length + ' Running';
+
+                if (list.length === 0) {
+                    document.getElementById('docker-list').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="py-6 text-center text-gray-400 text-xs">No containers running</td>
+                    </tr>
+                `;
+                    return;
+                }
+
+                const html = list.map(c => `
+                <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td class="py-2.5">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                            <span class="font-medium text-gray-700">${c.name}</span>
+                        </div>
+                    </td>
+                    <td class="py-2.5 text-gray-500">${c.status}</td>
+                    <td class="py-2.5 text-blue-600 font-medium">${c.cpu}</td>
+                    <td class="py-2.5 text-gray-600">${c.mem || c.memory || '--'}</td>
+                </tr>
+            `).join('');
+
+                document.getElementById('docker-list').innerHTML = html;
+            }
+
+            function updateTopProcesses(processes) {
+                const list = Array.isArray(processes) ? processes : [];
+                if (list.length === 0) {
+                    document.getElementById('top-processes').innerHTML = `
+                    <div class="text-center py-8 text-gray-400 text-sm">No process data</div>
+                `;
+                    return;
+                }
+
+                const html = list.map((p, i) => `
+                <div class="flex items-center justify-between py-1.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold text-gray-300">0${i + 1}</span>
+                        <span class="text-[11px] text-gray-700 truncate max-w-[120px]">${p.name}</span>
+                    </div>
+                    <span class="text-[10px] font-medium text-gray-500">${p.cpu}%</span>
+                </div>
+            `).join('');
+
+                document.getElementById('top-processes').innerHTML = html;
+            }
+
+            function checkAlerts(data) {
+                activeAlerts = [];
+                if (data.cpu > THRESHOLDS.cpu) {
+                    activeAlerts.push({ type: 'critical', message: `CPU usage at ${data.cpu}%`, time: new Date().toLocaleTimeString() });
+                }
+                if (data.memory > THRESHOLDS.memory) {
+                    activeAlerts.push({ type: 'warning', message: `Memory usage at ${data.memory}%`, time: new Date().toLocaleTimeString() });
+                }
+                if (data.disk > THRESHOLDS.disk) {
+                    activeAlerts.push({ type: 'critical', message: `Disk usage at ${data.disk}%`, time: new Date().toLocaleTimeString() });
+                }
+
+                document.getElementById('alert-count').textContent = activeAlerts.length;
+
+                if (activeAlerts.length === 0) {
+                    document.getElementById('alerts-list').innerHTML = '<div class="text-center py-6 text-gray-400 text-xs">No active alerts</div>';
+                } else {
+                    document.getElementById('alerts-list').innerHTML = activeAlerts.map(a => `
+                    <div class="p-2 ${a.type === 'critical' ? 'bg-red-50 border-l-2 border-red-500' : 'bg-amber-50 border-l-2 border-amber-500'} rounded-r-lg">
+                        <div class="flex justify-between items-start">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[11px] font-medium ${a.type === 'critical' ? 'text-red-700' : 'text-amber-700'} truncate">${a.message}</p>
+                                <p class="text-[9px] text-gray-500 mt-0.5">${a.time}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                }
+            }
+
+            window.addEventListener('load', init);
+        </script>
+</body>
+
+</html>

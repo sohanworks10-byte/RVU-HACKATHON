@@ -1,0 +1,879 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="web-shim.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaOps Enterprise - Monitoring Control Plane</title>
+    <!-- TailAdmin/Modern Aesthetics -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --primary: #3C50E0;
+            --primary-dark: #2D3A9C;
+            --bg-body: #F1F5F9;
+            --bg-card: #FFFFFF;
+            --border: #E2E8F0;
+            --text-main: #1C2434;
+            --text-muted: #64748B;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding-top: 80px;
+            /* Space for floating nav */
+            overflow-x: hidden;
+        }
+
+        .outfit {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Floating Nav */
+        .floating-nav {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 1200px;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 32px;
+            z-index: 1000;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Bento Cards */
+        .bento-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bento-card:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Metric Grid */
+        .metric-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Status Colors */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .bg-success {
+            background-color: #10B981;
+        }
+
+        .bg-warning {
+            background-color: #FBBF24;
+        }
+
+        .bg-danger {
+            background-color: #EF4444;
+        }
+
+        /* Layer 1 Status Bar */
+        .status-bar {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        /* Chart adjustments */
+        .apexcharts-canvas {
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+    <!-- Floating Nav Bar -->
+    <nav class="floating-nav">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-[#3C50E0] rounded-lg flex items-center justify-center text-white">
+                <i class="fas fa-layer-group text-sm"></i>
+            </div>
+            <span class="outfit font-extrabold text-lg tracking-tight">AlphaOps</span>
+        </div>
+
+        <div class="hidden md:flex items-center gap-1">
+            <div class="nav-link active" onclick="scrollToLayer('overview')">Overview</div>
+            <div class="nav-link" onclick="scrollToLayer('system')">System</div>
+            <div class="nav-link" onclick="scrollToLayer('containers')">Containers</div>
+            <div class="nav-link" onclick="scrollToLayer('network')">Network</div>
+            <div class="nav-link" onclick="scrollToLayer('alerts')">Alerts</div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] text-slate-400 uppercase font-bold leading-none">Server</span>
+                <select id="server-select" class="bg-transparent text-xs font-bold focus:outline-none cursor-pointer">
+                    <option value="">Detecting...</option>
+                </select>
+            </div>
+            <div id="connection-indicator" class="w-3 h-3 rounded-full bg-slate-300 animate-pulse"></div>
+        </div>
+    </nav>
+
+    <div class="max-w-[1400px] mx-auto space-y-8 mt-4">
+
+        <!-- LAYER 1: System Health Overview -->
+        <div id="layer-overview" class="animate-fade">
+            <div class="status-bar group">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Global Status</span>
+                    <span id="global-health-tag"
+                        class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-600 text-[10px] uppercase font-bold tracking-tight">Optimized</span>
+                </div>
+                <div class="h-4 w-px bg-slate-200"></div>
+                <div class="flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
+                    <span>CPU: <span id="bar-cpu" class="text-indigo-600">--%</span></span>
+                    <span>LOAD: <span id="bar-load" class="text-slate-600">--</span></span>
+                    <span>MEM: <span id="bar-mem" class="text-slate-600">--%</span></span>
+                    <span>DISK: <span id="bar-disk" class="text-slate-600">--%</span></span>
+                    <span>NET: <span id="bar-net" class="text-slate-600">-- MB/s</span></span>
+                    <div class="h-4 w-px bg-slate-200"></div>
+                    <span class="flex items-center gap-1.5"><span id="alert-count"
+                            class="text-red-500 font-bold">0</span> ALERTS</span>
+                    <span class="flex items-center gap-1.5"><span id="services-healthy"
+                            class="text-emerald-500 font-bold">100%</span> HEALTHY</span>
+                </div>
+                <div class="ml-auto text-slate-400 text-[10px] flex items-center gap-2">
+                    <i class="fas fa-history"></i>
+                    <span id="last-update">Syncing...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- LAYER 2: Core Metrics Grid -->
+        <div id="layer-system" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade"
+            style="animation-delay: 0.1s">
+            <!-- Card 1: CPU & Load -->
+            <div class="bento-card">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <div class="metric-label">Compute Intelligence</div>
+                        <div class="metric-value" id="main-cpu">--%</div>
+                    </div>
+                    <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                </div>
+                <div id="cpu-chart" class="h-24 -mx-4"></div>
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">Load 1/5/15</div>
+                        <div class="text-[11px] font-bold" id="detail-load">-- / -- / --</div>
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">Open Files</div>
+                        <div class="text-[11px] font-bold" id="detail-threads">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Memory & Pressure -->
+            <div class="bento-card">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <div class="metric-label">Memory Pressure</div>
+                        <div class="metric-value" id="main-mem">--%</div>
+                    </div>
+                    <div class="p-2 bg-purple-50 text-purple-600 rounded-xl">
+                        <i class="fas fa-memory"></i>
+                    </div>
+                </div>
+                <div id="mem-chart" class="h-24 -mx-4"></div>
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">Used/Avail</div>
+                        <div class="text-[11px] font-bold" id="detail-mem-used">-- / --</div>
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">PSI (Mem)</div>
+                        <div class="text-[11px] font-bold text-indigo-600" id="detail-psi">--.---</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Disk Health -->
+            <div class="bento-card">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <div class="metric-label">Disk Throughput</div>
+                        <div class="metric-value" id="main-disk">--%</div>
+                    </div>
+                    <div class="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                </div>
+                <div id="disk-chart" class="h-24 -mx-4"></div>
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">IO Latency</div>
+                        <div class="text-[11px] font-bold text-amber-600" id="detail-io-latency">--ms</div>
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">Inodes</div>
+                        <div class="text-[11px] font-bold" id="detail-inodes">--%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Network -->
+            <div class="bento-card">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <div class="metric-label">Network Error Rate</div>
+                        <div class="metric-value text-emerald-600" id="main-net-errors">0</div>
+                    </div>
+                    <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                </div>
+                <div id="net-chart" class="h-24 -mx-4"></div>
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">Tx/Rx MB/s</div>
+                        <div class="text-[11px] font-bold" id="detail-net-io">-- / --</div>
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">TCP Conns</div>
+                        <div class="text-[11px] font-bold" id="detail-tcp">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Grid: Layer 3 & 4 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- LAYER 3: Runtime Layer (Docker) -->
+            <div id="layer-containers" class="lg:col-span-2 space-y-6 animate-fade" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between">
+                    <h2 class="outfit font-bold text-xl flex items-center gap-3">
+                        <i class="fab fa-docker text-blue-500"></i>
+                        Docker Container Health
+                    </h2>
+                    <span id="container-count"
+                        class="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-bold">0 Running</span>
+                </div>
+                <div class="bento-card p-0 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Container Name</th>
+                                <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Status</th>
+                                <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">CPU
+                                    %</th>
+                                <th class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Memory</th>
+                                <th
+                                    class="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="docker-list" class="divide-y divide-slate-50">
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td colspan="5" class="px-6 py-12 text-center text-slate-400 text-sm">
+                                    <i class="fas fa-box-open block text-2xl mb-2 opacity-20"></i>
+                                    Waiting for Docker pulse...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Failed Services -->
+                <div class="mt-8">
+                    <h2 class="outfit font-bold text-xl mb-4 flex items-center gap-3">
+                        <i class="fas fa-server text-indigo-500"></i>
+                        Failed System Services
+                    </h2>
+                    <div id="failed-services-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bento-card border-dashed flex items-center justify-center text-slate-400 py-8">
+                            <span class="text-sm">All services are running normally</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYER 4: Alerts Panel -->
+            <div id="layer-alerts" class="space-y-6 animate-fade" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between">
+                    <h2 class="outfit font-bold text-xl flex items-center gap-3">
+                        <i class="fas fa-bell text-red-500"></i>
+                        Enterprise Alerts
+                    </h2>
+                    <button onclick="clearAlerts()"
+                        class="text-[10px] font-bold text-slate-400 uppercase hover:text-red-500 transition-colors">Clear
+                        All</button>
+                </div>
+                <div class="space-y-3" id="alerts-container">
+                    <!-- Example Alert -->
+                    <div class="bento-card border-l-4 border-l-red-500 bg-red-50/10 p-4">
+                        <div class="flex justify-between items-start">
+                            <div class="flex gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle text-xs"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-slate-900">System initialization complete</div>
+                                    <div class="text-[11px] text-slate-500 mt-1">Monitoring engine active. Current
+                                        thresholds: CPU > 85%, DISK > 90%</div>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-400">Just Now</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top 5 CPU Consumers -->
+                <div class="mt-8">
+                    <h2 class="outfit font-bold text-lg mb-4">Top Resource Consumers</h2>
+                    <div class="bento-card p-4 space-y-4" id="top-processes">
+                        <div class="animate-pulse flex items-center justify-between">
+                            <div class="h-2 w-24 bg-slate-100 rounded"></div>
+                            <div class="h-2 w-12 bg-slate-100 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CORE STATE ---
+        let backendUrl = '';
+        let currentServerId = '';
+        let authToken = '';
+        let updateInterval = null;
+        let chartInstances = {};
+        let activeAlerts = [];
+        const maxHistory = 30;
+        const dataHistory = {
+            cpu: Array(maxHistory).fill(0),
+            mem: Array(maxHistory).fill(0),
+            disk: Array(maxHistory).fill(0),
+            net: Array(maxHistory).fill(0)
+        };
+
+        const THRESHOLDS = {
+            cpu: 85,
+            mem: 90,
+            disk: 90,
+            io_latency: 50, // ms
+            failed_services: 0
+        };
+
+        // --- INITIALIZATION ---
+        async function init() {
+            try {
+                // 1. Get backend info from preload
+                if (window.electronAPI) {
+                    const result = await window.electronAPI.getBackendUrl();
+                    if (result.success) {
+                        backendUrl = result.url;
+                        authToken = await window.electronAPI.getToken();
+                    }
+
+                    // 2. Listen for server changes
+                    window.electronAPI.onServerConnected((serverId) => {
+                        currentServerId = serverId;
+                        resetDashboard();
+                        refreshStats();
+                    });
+                } else {
+                    // Browser testing fallback
+                    backendUrl = 'https://AlphaOps-backend-api-production.up.railway.app';
+                }
+
+                initCharts();
+                startPolling();
+
+            } catch (err) {
+                console.error("Init Error:", err);
+            }
+        }
+
+        function resetDashboard() {
+            dataHistory.cpu.fill(0);
+            dataHistory.mem.fill(0);
+            dataHistory.disk.fill(0);
+            dataHistory.net.fill(0);
+            activeAlerts = [];
+            renderAlerts();
+            document.getElementById('docker-list').innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 text-sm">Waiting for pulse...</td></tr>`;
+        }
+
+        // --- DASHBOARD POLLING ---
+        function startPolling() {
+            if (updateInterval) clearInterval(updateInterval);
+            updateInterval = setInterval(refreshStats, 3000);
+            refreshStats();
+        }
+
+        async function refreshStats() {
+            if (!currentServerId || !backendUrl) return;
+
+            try {
+                const response = await fetch(`${backendUrl}/ssh/stats`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ serverId: currentServerId })
+                });
+
+                if (!response.ok) throw new Error("Fetch failed");
+
+                const json = await response.json();
+                if (json.success && json.data) {
+                    processUpdate(json.data);
+                    document.getElementById('connection-indicator').className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]";
+                    document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+                }
+            } catch (err) {
+                console.error("Refresh Stats Error:", err);
+                document.getElementById('connection-indicator').className = "w-2 h-2 rounded-full bg-red-500 animate-pulse";
+            }
+        }
+
+        // --- DATA PROCESSING ---
+        function processUpdate(data) {
+            // 1. Basic Metrics
+            const cpu = parseFloat(data.cpu) || 0;
+            const ram = parseFloat(data.ram) || 0;
+            const disk = parseFloat(data.disk) || 0;
+            const uptime = data.uptime || "";
+            const loadMatch = uptime.match(/load average:\s*([^,]+),\s*([^,]+),\s*([^,]+)/);
+            const load1 = loadMatch ? loadMatch[1] : "--";
+
+            // 2. Update Bar (Layer 1)
+            document.getElementById('bar-cpu').textContent = `${cpu}%`;
+            document.getElementById('bar-mem').textContent = `${ram}%`;
+            document.getElementById('bar-disk').textContent = `${disk}%`;
+            document.getElementById('bar-load').textContent = load1;
+
+            // 3. Update Main Cards (Layer 2)
+            document.getElementById('main-cpu').textContent = `${cpu}%`;
+            document.getElementById('main-mem').textContent = `${ram}%`;
+            document.getElementById('main-disk').textContent = `${disk}%`;
+            document.getElementById('detail-load').textContent = loadMatch ? `${load1} / ${loadMatch[2]} / ${loadMatch[3]}` : "--";
+
+            // Parse Memory Detail
+            if (data.free) {
+                const memLines = data.free.split('\n');
+                if (memLines.length > 1) {
+                    const parts = memLines[1].trim().split(/\s+/);
+                    document.getElementById('detail-mem-used').textContent = `${parts[2]} / ${parts[1]}`;
+                }
+            }
+
+            // Open Files (file-nr)
+            if (data.file_nr) {
+                const parts = data.file_nr.split(/\s+/);
+                document.getElementById('detail-threads').textContent = parts[0] || "--"; // Using it as 'Open Files'
+            }
+
+            // Linux PSI Parsing
+            if (data.psi_memory) {
+                const psiMatch = data.psi_memory.match(/some avg10=([\d.]+)/);
+                if (psiMatch) document.getElementById('detail-psi').textContent = psiMatch[1];
+            }
+
+            // Disk IO (iostat) parsing
+            if (data.iostat) {
+                const lines = data.iostat.split('\n');
+                let awaitVal = 0.0;
+                for (let line of lines) {
+                    if (line.includes('sda') || line.includes('nvme') || line.includes('vda')) {
+                        const parts = line.trim().split(/\s+/);
+                        // iostat cols change version to version, we try to guess await column
+                        // Usually r_await is 10th-ish. For simplicity we look for %util at end.
+                        const util = parts[parts.length - 1];
+                        document.getElementById('detail-io-latency').textContent = `${parts[10] || '0'}ms`;
+                        break;
+                    }
+                }
+            }
+
+            // Inodes
+            if (data.inodes) document.getElementById('detail-inodes').textContent = data.inodes;
+
+            // Network Errors & TCP
+            if (data.net_dev) {
+                const lines = data.net_dev.split('\n');
+                let errs = 0;
+                for (let line of lines) {
+                    if (line.includes(':')) {
+                        const parts = line.trim().split(/\s+/);
+                        errs += parseInt(parts[3]) + parseInt(parts[11]); // rx_err + tx_err
+                    }
+                }
+                document.getElementById('main-net-errors').textContent = errs;
+                document.getElementById('main-net-errors').className = errs > 0 ? "metric-value text-red-500" : "metric-value text-emerald-600";
+            }
+            if (data.tcp_conns) document.getElementById('detail-tcp').textContent = data.tcp_conns;
+
+            // 4. Update Charts
+            updateChartHistory('cpu', cpu);
+            updateChartHistory('mem', ram);
+            updateChartHistory('disk', disk);
+
+            // 5. Runtime Layer (Docker)
+            updateDockerUI(data.docker_ps, data.docker_stats);
+
+            // 6. Failed Services
+            updateFailedServices(data.failed_services);
+
+            // 7. Top Processes
+            updateTopProcesses(data.topCpu);
+
+            // 8. Alert Engine
+            runAlertEngine(data, { cpu, ram, disk });
+        }
+
+        // --- UI UPDATERS ---
+        function updateChartHistory(key, val) {
+            dataHistory[key].shift();
+            dataHistory[key].push(val);
+            if (chartInstances[key]) {
+                chartInstances[key].updateSeries([{ data: dataHistory[key] }]);
+            }
+        }
+
+        function updateDockerUI(ps, stats) {
+            const listEl = document.getElementById('docker-list');
+            const countEl = document.getElementById('container-count');
+
+            if (!ps || ps.includes('Cannot connect')) {
+                listEl.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">Docker Daemon not detected</td></tr>`;
+                countEl.textContent = "0 Running";
+                return;
+            }
+
+            const containers = ps.trim().split('\n').filter(l => l);
+            const statsMap = {};
+
+            if (stats) {
+                const statsLines = stats.trim().split('\n').slice(1); // skip header
+                statsLines.forEach(line => {
+                    const p = line.trim().split(/\s+/);
+                    if (p.length >= 3) {
+                        statsMap[p[0]] = { cpu: p[1], mem: p[2] };
+                    }
+                });
+            }
+
+            countEl.textContent = `${containers.length} Running`;
+
+            let html = '';
+            containers.forEach(c => {
+                const parts = c.split(' ');
+                const name = parts[0];
+                const status = parts.slice(1).join(' ');
+                const isUp = status.toLowerCase().includes('up');
+                const s = statsMap[name] || { cpu: '--', mem: '--' };
+
+                html += `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full ${isUp ? 'bg-emerald-500' : 'bg-red-500'}"></div>
+                            <span class="text-sm font-semibold">${name}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-xs text-slate-500">${status}</td>
+                    <td class="px-6 py-4 text-xs font-bold text-indigo-600">${s.cpu}</td>
+                    <td class="px-6 py-4 text-xs font-medium text-slate-600">${s.mem}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="px-2 py-1 hover:bg-red-50 text-red-400 rounded transition-colors" title="Stop Container">
+                            <i class="fas fa-power-off text-xs"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            listEl.innerHTML = html || `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">No active containers</td></tr>`;
+        }
+
+        function updateFailedServices(failed) {
+            const listEl = document.getElementById('failed-services-list');
+            if (!failed || failed.trim() === '') {
+                listEl.innerHTML = `<div class="bento-card border-dashed border-emerald-200 bg-emerald-50/20 flex items-center justify-center text-emerald-600 py-6">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span class="text-xs font-bold uppercase tracking-tight">All systems operational</span>
+                </div>`;
+                document.getElementById('services-healthy').textContent = "100%";
+                document.getElementById('services-healthy').className = "text-emerald-500 font-bold";
+                return;
+            }
+
+            const services = failed.trim().split('\n');
+            let html = '';
+            services.forEach(s => {
+                const parts = s.trim().split(/\s+/);
+                html += `
+                <div class="bento-card border-red-100 bg-red-50/20 p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-slate-900">${parts[0]}</div>
+                            <div class="text-[10px] text-red-500 font-bold uppercase">${parts[1] || 'FAILED'}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            listEl.innerHTML = html;
+            document.getElementById('services-healthy').textContent = "Critical";
+            document.getElementById('services-healthy').className = "text-red-500 font-bold";
+        }
+
+        function updateTopProcesses(top) {
+            const el = document.getElementById('top-processes');
+            if (!top) return;
+
+            const lines = top.trim().split('\n').slice(1, 6); // Top 5
+            let html = '';
+            lines.forEach(l => {
+                const p = l.trim().split(/\s+/);
+                const cpu = p[2];
+                const mem = p[3];
+                const name = p[p.length - 1].split('/').pop();
+                html += `
+                <div class="flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] font-bold text-slate-300 w-4">0${lines.indexOf(l) + 1}</span>
+                        <span class="text-xs font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors">${name}</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-[10px] font-bold text-slate-400">M: ${mem}%</div>
+                        <div class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">C: ${cpu}%</div>
+                    </div>
+                </div>`;
+            });
+            el.innerHTML = html;
+        }
+
+        // --- ALERT ENGINE ---
+        function runAlertEngine(data, metrics) {
+            const now = new Date().toLocaleTimeString();
+
+            if (metrics.cpu > THRESHOLDS.cpu) addAlert("High CPU Usage", `CPU is at ${metrics.cpu}%`, "danger");
+            if (metrics.ram > THRESHOLDS.mem) addAlert("Memory Pressure", `RAM utilization at ${metrics.ram}%`, "warning");
+            if (metrics.disk > THRESHOLDS.disk) addAlert("Disk Capacity", `Root partition at ${metrics.disk}%`, "danger");
+
+            document.getElementById('alert-count').textContent = activeAlerts.length;
+            renderAlerts();
+
+            // Global Status Tag
+            const tag = document.getElementById('global-health-tag');
+            if (activeAlerts.some(a => a.level === 'danger')) {
+                tag.textContent = "CRITICAL";
+                tag.className = "px-2 py-0.5 rounded bg-red-100 text-red-600 text-[10px] uppercase font-bold tracking-tight";
+            } else if (activeAlerts.length > 0) {
+                tag.textContent = "WARNING";
+                tag.className = "px-2 py-0.5 rounded bg-amber-100 text-amber-600 text-[10px] uppercase font-bold tracking-tight";
+            } else {
+                tag.textContent = "OPTIMIZED";
+                tag.className = "px-2 py-0.5 rounded bg-emerald-100 text-emerald-600 text-[10px] uppercase font-bold tracking-tight";
+            }
+        }
+
+        function addAlert(title, msg, level) {
+            // Prevent duplicates
+            if (activeAlerts.find(a => a.title === title)) return;
+            activeAlerts.unshift({ title, msg, level, time: new Date().toLocaleTimeString() });
+            if (activeAlerts.length > 10) activeAlerts.pop();
+        }
+
+        function renderAlerts() {
+            const container = document.getElementById('alerts-container');
+            if (activeAlerts.length === 0) {
+                container.innerHTML = `<div class="bento-card border-dashed flex items-center justify-center py-12 text-slate-300">
+                    <span class="text-xs font-bold uppercase tracking-widest">No Active Alerts</span>
+                </div>`;
+                return;
+            }
+
+            container.innerHTML = activeAlerts.map(a => `
+                <div class="bento-card border-l-4 ${a.level === 'danger' ? 'border-l-red-500 bg-red-50/10' : 'border-l-amber-500 bg-amber-50/10'} p-4 animate-fade">
+                    <div class="flex justify-between items-start">
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full ${a.level === 'danger' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'} flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-${a.level === 'danger' ? 'exclamation-triangle' : 'info-circle'} text-xs"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-slate-900">${a.title}</div>
+                                <div class="text-[11px] text-slate-500 mt-1">${a.msg}</div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400">${a.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearAlerts() {
+            activeAlerts = [];
+            renderAlerts();
+            document.getElementById('alert-count').textContent = "0";
+        }
+
+        // --- CHARTS ---
+        function initCharts() {
+            const commonConfig = {
+                chart: { type: 'area', height: 100, sparkline: { enabled: true }, animations: { enabled: true, easing: 'easeinout', speed: 800 } },
+                stroke: { curve: 'smooth', width: 2 },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05 } },
+                tooltip: { enabled: false }
+            };
+
+            chartInstances.cpu = new ApexCharts(document.querySelector("#cpu-chart"), {
+                ...commonConfig,
+                series: [{ name: 'CPU', data: dataHistory.cpu }],
+                colors: ['#3C50E0']
+            });
+            chartInstances.mem = new ApexCharts(document.querySelector("#mem-chart"), {
+                ...commonConfig,
+                series: [{ name: 'RAM', data: dataHistory.mem }],
+                colors: ['#8b5cf6']
+            });
+            chartInstances.disk = new ApexCharts(document.querySelector("#disk-chart"), {
+                ...commonConfig,
+                series: [{ name: 'Disk', data: dataHistory.disk }],
+                colors: ['#f59e0b']
+            });
+            chartInstances.net = new ApexCharts(document.querySelector("#net-chart"), {
+                ...commonConfig,
+                series: [{ name: 'Net', data: dataHistory.net }],
+                colors: ['#10b981']
+            });
+
+            Object.values(chartInstances).forEach(c => c.render());
+        }
+
+        // --- NAVIGATION ---
+        function scrollToLayer(id) {
+            const el = document.getElementById('layer-' + id);
+            if (el) {
+                window.scrollTo({ top: el.offsetTop - 100, behavior: 'smooth' });
+                // Update active state
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                event.target.classList.add('active');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+
+</html>

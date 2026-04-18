@@ -1,0 +1,25 @@
+﻿{
+  "name": "@AlphaOps/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.621.0",
+    "@aws-sdk/s3-request-presigner": "^3.621.0",
+    "@supabase/supabase-js": "^2.93.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg-mem": "^3.0.5",
+    "pg": "^8.13.1",
+    "redis": "^4.7.0",
+    "ssh2": "^1.17.0",
+    "ws": "^8.18.3"
+  }
+}

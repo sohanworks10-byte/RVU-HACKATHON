@@ -1,0 +1,9 @@
+apps/desktop
+node_modules
+.git
+.vscode
+*.md
+test-migration.js
+packages
+migrations
+agent-repo

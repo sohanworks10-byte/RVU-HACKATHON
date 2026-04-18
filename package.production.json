@@ -1,0 +1,10 @@
+{
+  "name": "devyntra-backend-production",
+  "private": true,
+  "workspaces": [
+    "apps/backend"
+  ],
+  "scripts": {
+    "start": "npm --workspace apps/backend run start"
+  }
+}

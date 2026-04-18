@@ -1,0 +1,11 @@
+
+> start
+> npm --workspace apps/backend run start
+
+
+> @devyntra/backend@0.1.0 start
+> node src/index.js
+
+Devyntra backend listening on 4000
+Terminate batch job (Y/N)? 
+^C
