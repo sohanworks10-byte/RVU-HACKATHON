@@ -1,0 +1,37 @@
+{
+  "name": "@devyntra/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.621.0",
+    "@aws-sdk/s3-request-presigner": "^3.621.0",
+    "@aws-sdk/client-ec2": "^3.621.0",
+    "@aws-sdk/client-rds": "^3.621.0",
+    "@aws-sdk/client-iam": "^3.621.0",
+    "@aws-sdk/client-cloudformation": "^3.621.0",
+    "@google-cloud/compute": "^4.0.0",
+    "@google-cloud/resource-manager": "^5.0.0",
+    "@azure/arm-compute": "^21.0.0",
+    "@azure/arm-network": "^32.0.0",
+    "@azure/arm-resources": "^5.0.0",
+    "@azure/identity": "^4.0.0",
+    "@supabase/supabase-js": "^2.93.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg-mem": "^3.0.5",
+    "pg": "^8.13.1",
+    "redis": "^4.7.0",
+    "ssh2": "^1.17.0",
+    "ws": "^8.18.3",
+    "terraform-generator": "^2.0.0",
+    "uuid": "^9.0.0"
+  }
+}

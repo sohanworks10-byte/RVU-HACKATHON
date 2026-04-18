@@ -1,0 +1,73 @@
+{
+    "name": "devyntra-software",
+    "version": "1.0.0",
+    "description": "DevOps Control Center",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "web": "node server.js",
+        "dev": "node server.js",
+        "dev:web": "node server.js",
+        "build:css": "tailwindcss -c tailwind.config.cjs -i ./tailwind.css -o ./dist/tailwind.css --minify",
+        "pack": "electron-builder --dir",
+        "dist": "electron-builder"
+    },
+    "author": "Devyntra Team",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/example/devyntra"
+    },
+    "license": "ISC",
+    "build": {
+        "appId": "com.devyntra.app",
+        "productName": "Devyntra",
+        "protocols": [
+            {
+                "name": "Devyntra Protocol",
+                "schemes": [
+                    "devyntra"
+                ]
+            }
+        ],
+        "win": {
+            "target": "nsis"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "shortcutName": "Devyntra"
+        }
+    },
+    "devDependencies": {
+        "electron": "^28.0.0",
+        "electron-builder": "^26.4.0",
+        "vite": "^5.4.0",
+        "@vitejs/plugin-react": "^4.3.0",
+        "typescript": "^5.5.4",
+        "@types/react": "^18.3.1",
+        "@types/react-dom": "^18.3.1",
+        "eslint": "^9.19.0",
+        "@eslint/js": "^9.19.0",
+        "typescript-eslint": "^8.22.0",
+        "tailwindcss": "^3.4.17"
+    },
+    "dependencies": {
+        "@devyntra/api-client": "0.1.0",
+        "@supabase/supabase-js": "^2.90.1",
+        "body-parser": "^1.20.2",
+        "express": "^4.18.2",
+        "framer-motion": "^12.26.2",
+        "lucide-react": "^0.562.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "node-forge": "^1.3.3"
+    },
+    "overrides": {
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "@types/react": "^18.3.1",
+        "@types/react-dom": "^18.3.1"
+    }
+}

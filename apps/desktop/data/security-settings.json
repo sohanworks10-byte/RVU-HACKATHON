@@ -1,0 +1,32 @@
+{
+  "devai": {
+    "storageMode": "minimal_cloud",
+    "retentionDays": 14,
+    "redactSecrets": true,
+    "readOnlyMode": true,
+    "requireManualApproval": true,
+    "allowlist": [],
+    "denylist": [
+      "rm -rf /",
+      "mkfs",
+      "dd if=",
+      "curl | bash",
+      "wget | sh",
+      "chmod 777",
+      "chown -R",
+      "useradd",
+      "passwd",
+      "iptables",
+      "ufw disable"
+    ]
+  },
+  "selfHost": {
+    "enabled": false,
+    "supabaseUrl": "",
+    "supabaseAnonKey": ""
+  },
+  "meta": {
+    "schemaVersion": 1,
+    "acceptedDisclaimer": true
+  }
+}

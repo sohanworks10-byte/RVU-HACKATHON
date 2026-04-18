@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="web-shim.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaOps - Authenticate</title>
+    <link rel="stylesheet" href="./dist/tailwind.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #f9fafb;
+        }
+
+        .bg-animate {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -2;
+            opacity: 0.1;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .glass-dark {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin: 1rem;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.3;
+            animation: float 10s infinite ease-in-out;
+        }
+
+        .shape-1 {
+            width: 300px;
+            height: 300px;
+            background: #6366f1;
+            top: -10%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+
+        .shape-2 {
+            width: 400px;
+            height: 400px;
+            background: #ec4899;
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(20px) scale(1.1);
+            }
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 0.75rem;
+            color: #1f2937;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            background: rgba(0, 0, 0, 0.02);
+            border-color: #6366f1;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            transition: color 0.3s;
+        }
+
+        .input-field:focus+.input-icon {
+            color: #6366f1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        .social-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .social-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hidden-panel {
+            display: none !important;
+        }
+
+        .form-transition {
+            transition: all 0.3s ease-out;
+        }
+
+        .status-success {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .status-error {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        .status-info {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.9);
+            transition: all 0.3s ease;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-icon {
+            width: 3rem;
+            height: 3rem;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .modal-success .modal-icon {
+            background: #10b981;
+            color: white;
+        }
+
+        .modal-error .modal-icon {
+            background: #ef4444;
+            color: white;
+        }
+
+        .modal-info .modal-icon {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-message {
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .modal-button {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen bg-transparent text-gray-900 p-4">
+
+    <div class="bg-animate"></div>
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+
+    <div class="glass-dark p-6 sm:p-8 rounded-2xl w-full max-w-md slide-up relative z-10 custom-scrollbar">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <img src="https://xnlmfbnwyqxownvhsqoz.supabase.co/storage/v1/object/public/files/cropped_circle_image.png"
+                alt="AlphaOps" class="w-16 h-16 rounded-2xl mx-auto mb-4">
+            <h1 class="text-3xl font-bold tracking-tight mb-2">AlphaOps</h1>
+            <p class="text-gray-600 text-sm">DevOps Control Center</p>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="login-form" class="space-y-4 form-transition">
+            <div class="text-center mb-6">
+                <h2 class="text-xl font-semibold">Welcome Back</h2>
+                <p class="text-gray-600 text-xs mt-1">Enter your credentials to access your workspace.</p>
+            </div>
+
+            <div class="input-group">
+                <input type="email" id="login-email" class="input-field" placeholder="Email Address" required>
+                <i class="fas fa-envelope input-icon"></i>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="login-password" class="input-field" placeholder="Password" required>
+                <i class="fas fa-lock input-icon"></i>
+            </div>
+
+            <div class="flex items-center justify-end text-xs text-gray-600 mb-6">
+                <a href="#" class="hover:text-indigo-600 transition-colors">Forgot Password?</a>
+            </div>
+
+            <button type="submit" id="btn-login" class="btn-primary flex justify-center items-center gap-2">
+                <span>Sign In</span>
+                <i class="fas fa-arrow-right text-sm"></i>
+            </button>
+
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-xs uppercase">
+                    <span class="bg-white px-2 text-gray-500">Or continue with</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" id="btn-google" class="social-btn">
+                    <i class="fab fa-google text-red-500"></i> Google
+                </button>
+                <button type="button" id="btn-github" class="social-btn">
+                    <i class="fab fa-github"></i> GitHub
+                </button>
+            </div>
+
+            <div class="text-center mt-6 text-sm text-gray-600">
+                Don't have an account?
+                <button type="button" onclick="showSignup()"
+                    class="text-indigo-600 hover:text-indigo-700 font-semibold ml-1">Sign Up</button>
+            </div>
+        </form>
+
+        <!-- SIGNUP FORM -->
+        <form id="signup-form" class="space-y-4 form-transition hidden-panel">
+            <div class="text-center mb-6">
+                <h2 class="text-xl font-semibold">Create Account</h2>
+                <p class="text-gray-600 text-xs mt-1">Join AlphaOps to manage your servers seamlessly.</p>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="signup-name" class="input-field" placeholder="Full Name" required>
+                <i class="fas fa-user input-icon"></i>
+            </div>
+
+            <div class="input-group">
+                <input type="email" id="signup-email" class="input-field" placeholder="Email Address" required>
+                <i class="fas fa-envelope input-icon"></i>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="signup-password" class="input-field" placeholder="Password" required>
+                <i class="fas fa-lock input-icon"></i>
+            </div>
+
+            <div class="text-xs text-gray-600 mb-6 px-1">
+                By clicking "Sign Up", you agree to our <a href="#" class="text-indigo-600">Terms</a> and <a href="#"
+                    class="text-indigo-600">Privacy Policy</a>.
+            </div>
+
+            <button type="submit" id="btn-signup" class="btn-primary flex justify-center items-center gap-2">
+                <span>Create Account</span>
+                <i class="fas fa-user-plus text-sm"></i>
+            </button>
+
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-xs uppercase">
+                    <span class="bg-white px-2 text-gray-500">Or join with</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" id="btn-google-up" class="social-btn">
+                    <i class="fab fa-google text-red-500"></i> Google
+                </button>
+                <button type="button" id="btn-github-up" class="social-btn">
+                    <i class="fab fa-github"></i> GitHub
+                </button>
+            </div>
+
+            <div class="text-center mt-6 text-sm text-gray-600">
+                Already have an account?
+                <button type="button" onclick="showLogin()"
+                    class="text-indigo-600 hover:text-indigo-700 font-semibold ml-1">Sign In</button>
+            </div>
+        </form>
+
+        <div id="status-msg"
+            class="hidden mt-4 p-4 rounded-lg text-sm text-center bg-white border border-gray-200 shadow-lg"></div>
+    </div>
+
+    <!-- Modal Popup -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="modal-title">Success</div>
+            <div class="modal-message">Message here</div>
+            <button class="modal-button" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <script src="auth-renderer.js"></script>
+    <script>
+        function showSignup() {
+            console.log('Showing signup form');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+
+            loginForm.style.opacity = '0';
+            loginForm.style.transform = 'translateY(10px)';
+
+            setTimeout(() => {
+                loginForm.classList.add('hidden-panel');
+                signupForm.classList.remove('hidden-panel');
+                signupForm.style.opacity = '1';
+                signupForm.style.transform = 'translateY(0)';
+            }, 200);
+        }
+
+        function showLogin() {
+            console.log('Showing login form');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+
+            signupForm.style.opacity = '0';
+            signupForm.style.transform = 'translateY(10px)';
+
+            setTimeout(() => {
+                signupForm.classList.add('hidden-panel');
+                loginForm.classList.remove('hidden-panel');
+                loginForm.style.opacity = '1';
+                loginForm.style.transform = 'translateY(0)';
+            }, 200);
+        }
+
+        function showModal(title, message, type = 'info') {
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContent = modalOverlay.querySelector('.modal-content');
+            const modalIcon = modalContent.querySelector('.modal-icon');
+            const modalTitle = modalContent.querySelector('.modal-title');
+            const modalMessage = modalContent.querySelector('.modal-message');
+
+            // Update modal content
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+
+            // Update modal class and icon
+            modalOverlay.className = `modal-overlay modal-${type}`;
+            modalContent.className = `modal-content modal-${type}`;
+
+            // Set icon based on type
+            if (type === 'success') {
+                modalIcon.innerHTML = '<i class="fas fa-check"></i>';
+            } else if (type === 'error') {
+                modalIcon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            } else {
+                modalIcon.innerHTML = '<i class="fas fa-info-circle"></i>';
+            }
+
+            // Show modal
+            modalOverlay.classList.add('show');
+
+            // Auto close after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    closeModal();
+                }, 5000);
+            }
+        }
+
+        function closeModal() {
+            const modalOverlay = document.getElementById('modal-overlay');
+            modalOverlay.classList.remove('show');
+        }
+
+        function showStatus(message, type = 'info') {
+            // Use modal instead of inline status message
+            if (message) {
+                let title = 'Information';
+                if (type === 'success') {
+                    title = 'Success!';
+                } else if (type === 'error') {
+                    title = 'Error!';
+                }
+                showModal(title, message, type);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Auth page loaded');
+
+            // Handle form submissions
+            document.getElementById('login-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                showStatus('Signing in...', 'info');
+                // Add your login logic here
+            });
+
+            document.getElementById('signup-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                showStatus('Account created! Please check email for verification (if enabled) or sign in.', 'success');
+                // Add your signup logic here
+            });
+        });
+    </script>
+</body>
+
+</html>

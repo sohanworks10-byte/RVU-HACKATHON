@@ -1,0 +1,16 @@
+.git
+node_modules
+**/node_modules
+apps/web
+apps/desktop
+apps/mobile
+packages
+supabase
+supabase-edge-function
+*.log
+.DS_Store
+.env
+.vercel
+.railway
+.next
+.expo

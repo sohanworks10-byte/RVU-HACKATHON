@@ -1,0 +1,13 @@
+Updated server card rendering code with connection type labels and static IP indicator.
+
+The changes include:
+1. Connection type label (AGENT/USER/SSH) in top-right corner with color coding
+2. Static IP confirmation badge when applicable
+3. Maintains same card size and shape
+4. Labels are positioned absolutely to not affect layout
+
+Implementation notes:
+- Agent connections: Indigo label
+- User connections: Green label  
+- SSH (root) connections: Blue label
+- Static IP badge shows below server info when isElasticIP is true

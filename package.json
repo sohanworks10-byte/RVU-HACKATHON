@@ -1,0 +1,21 @@
+{
+  "name": "devyntra-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:desktop",
+    "dev:backend": "npm --workspace apps/backend run dev",
+    "dev:desktop": "npm --workspace apps/desktop run dev",
+    "dev:web": "npm --workspace apps/desktop run web",
+    "build:desktop": "npm --workspace apps/desktop run build",
+    "start": "npm --workspace apps/backend run start",
+    "start:backend": "npm --workspace apps/backend run start",
+    "start:desktop": "npm --workspace apps/desktop run start",
+    "start:web": "npm --workspace apps/desktop run web",
+    "pack:desktop": "npm --workspace apps/desktop run pack",
+    "dist:desktop": "npm --workspace apps/desktop run dist"
+  }
+}
